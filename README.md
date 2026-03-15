@@ -1,6 +1,6 @@
 # deep-workflow
 
-`deep-workflow` is a modern Python-based web app for tracking focused 45-minute deep-work sessions and daily rituals. It is designed for personal productivity, syncs across devices, and centers each day around three personal sessions plus one admin or must-do session. Licensed AGPLv3.
+`deep-workflow` is a modern Python-based web app for tracking focused 45-minute deep-work sessions and daily rituals. It is designed for personal productivity, syncs across devices, and centers each day around three personal sessions plus one admin or must-do session. Licensed under the AGPLv3.
 
 ## Product idea
 
@@ -9,7 +9,7 @@ The project starts from a spreadsheet-inspired workflow, but the goal is a hoste
 The core experience should work well on both laptops and smartphones:
 
 - plan three personal deep-work sessions per day
-- reserve one fourth session for admin, must-dos, or work for others
+- reserve a fourth session for admin, must-dos, or work for others
 - default each session to 45 minutes
 - keep goals, notes, and progress synced across devices
 
@@ -18,7 +18,7 @@ The core experience should work well on both laptops and smartphones:
 The first version should focus on a clean, dependable foundation:
 
 - authenticated access to the same account from multiple devices
-- a daily sheet showing 3 personal sessions and 1 admin session
+- a daily sheet showing three personal sessions and one admin session
 - session goals, notes, and completion state
 - a server-backed 45-minute timer that survives refreshes
 - daily and weekly progress summaries
