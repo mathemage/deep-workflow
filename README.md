@@ -1,5 +1,7 @@
 # deep-workflow
 
+[![License: AGPL v3](https://img.shields.io/badge/License-AGPL_v3-blue.svg)](https://choosealicense.com/licenses/agpl-3.0/)
+
 `deep-workflow` is a modern Python-based web app for tracking focused 45-minute deep-work sessions and daily rituals. It is designed for personal productivity, syncs across devices, and centers each day around three personal sessions plus one admin or must-do session. Licensed under the AGPLv3.
 
 ## Product idea
