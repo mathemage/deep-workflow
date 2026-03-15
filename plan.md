@@ -1,10 +1,4 @@
-# Time Management Sheet roadmap
-
-## Current status
-
-- PR 1 is underway via GitHub Issue `#2` and PR `#3`
-- review feedback on PR `#3` has been addressed
-- the next planned implementation slice is PR 2: `chore(app): Bootstrap Django project, tooling, and CI`
+# deep-workflow roadmap
 
 ## Problem
 
@@ -43,7 +37,7 @@ Assumptions for MVP:
 
 ### PR 1
 
-- **Title:** `docs(product): Define MVP and architecture for Time Management Sheet`
+- **Title:** `docs(product): Define MVP and architecture for deep-workflow`
 - **Branch:** `docs/mvp-architecture`
 - **Goal:** lock the product shape and technical direction before code generation starts
 - **PR body:**
@@ -55,7 +49,7 @@ Assumptions for MVP:
 
   ## What changed
 
-  - added a product brief for the Time Management Sheet app
+  - added a product brief for the deep-workflow app
   - defined MVP scope, non-goals, and success criteria
   - documented the recommended stack: Django + PostgreSQL + HTMX/Alpine + Tailwind
   - captured the phased PR roadmap for implementation
@@ -77,7 +71,7 @@ Assumptions for MVP:
   ```text
   Read README.md and .github/copilot-instructions.md first.
 
-  Create a new GitHub Issue for defining the product brief and technical direction for a hosted Time Management Sheet web app. Then create a branch named docs/mvp-architecture and implement only this PR.
+  Create a new GitHub Issue for defining the product brief and technical direction for the hosted deep-workflow web app. Then create a branch named docs/mvp-architecture and implement only this PR.
 
   Add or update documentation to define:
   - the product vision
@@ -90,7 +84,7 @@ Assumptions for MVP:
   Keep the PR documentation-only and easy to review. Use commit messages that match the repo rules, with an explicit scope and the issue number.
 
   Open a PR with the title:
-  docs(product): Define MVP and architecture for Time Management Sheet
+  docs(product): Define MVP and architecture for deep-workflow
 
   Use the planned PR body from the roadmap.
   ```
