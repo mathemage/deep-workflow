@@ -33,8 +33,9 @@ To keep the first version simple and fast to iterate on, the recommended stack i
 - PostgreSQL
 - Django templates with HTMX and Alpine.js
 - Tailwind CSS
+- Vercel for production hosting and pull request preview deployments
 
-This keeps the app strongly Python-first while still leaving room for a modern, responsive UI.
+This keeps the app strongly Python-first while still leaving room for a modern, responsive UI. For the detailed hosting roadmap and deployment expectations, see `plan.md`, especially PR 9.
 
 ## Roadmap
 
@@ -48,4 +49,4 @@ The implementation should land in small, reviewable PRs:
 6. add the synced 45-minute session timer
 7. auto-generate daily sheets and add progress summaries
 8. polish the mobile UX and add PWA basics
-9. prepare production deployment, backups, and monitoring
+9. prepare Vercel deployment, backups, and monitoring

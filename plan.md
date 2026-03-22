@@ -20,6 +20,8 @@ Recommended stack for v1:
 - Tailwind CSS for responsive, polished UI
 - Vercel for production hosting and pull request preview deployments
 
+Keep `README.md`'s stack summary aligned with this section. Detailed hosting guidance for Vercel production and PR previews lives in this plan, especially PR 9 below.
+
 Why this stack:
 
 - Django gives auth, ORM, migrations, admin, forms, and deployment maturity out of the box
@@ -53,7 +55,7 @@ Assumptions for MVP:
 
   - added a product brief for the deep-workflow app
   - defined MVP scope, non-goals, and success criteria
-  - documented the recommended stack: Django + PostgreSQL + HTMX/Alpine + Tailwind
+  - documented the recommended stack: Django + PostgreSQL + HTMX/Alpine + Tailwind + Vercel
   - captured the phased PR roadmap for implementation
 
   ## Acceptance criteria
