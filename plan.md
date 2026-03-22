@@ -18,6 +18,9 @@ Recommended stack for v1:
 - PostgreSQL for hosted persistence
 - Django templates + HTMX + Alpine.js for a modern UX without a heavy SPA
 - Tailwind CSS for responsive, polished UI
+- Vercel for production hosting and pull request preview deployments
+
+Keep `README.md`'s stack summary aligned with this section. Detailed hosting guidance for Vercel production and PR previews lives in this plan, especially PR 9 below.
 
 Why this stack:
 
@@ -25,6 +28,7 @@ Why this stack:
 - server-rendered pages keep the product simple while still feeling fast
 - HTMX/Alpine add interactivity where needed without creating a separate frontend app
 - PostgreSQL makes hosted sync straightforward
+- Vercel gives a clear path for production releases and PR previews
 
 Assumptions for MVP:
 
@@ -51,7 +55,7 @@ Assumptions for MVP:
 
   - added a product brief for the deep-workflow app
   - defined MVP scope, non-goals, and success criteria
-  - documented the recommended stack: Django + PostgreSQL + HTMX/Alpine + Tailwind
+  - documented the recommended stack: Django + PostgreSQL + HTMX/Alpine + Tailwind + Vercel
   - captured the phased PR roadmap for implementation
 
   ## Acceptance criteria
@@ -435,14 +439,14 @@ Assumptions for MVP:
 
   ## What changed
 
-  - added production settings and deployment configuration
-  - documented the hosting path
+  - added production settings and Vercel deployment configuration
+  - documented the Vercel hosting path for production and PR previews
   - added health checks and baseline monitoring hooks
   - documented database backup/restore expectations
 
   ## Acceptance criteria
 
-  - the repository documents a clear deployment path
+  - the repository documents a clear Vercel deployment path for production and PR previews
   - production configuration is separated from local development
   - backup and restore steps are defined
 
@@ -461,7 +465,7 @@ Assumptions for MVP:
 
   Prepare the app for real hosting:
   - production-safe Django settings
-  - deployment config for a straightforward hosting target
+  - deployment config for Vercel production and PR preview environments
   - health checks
   - monitoring/logging hooks
   - backup and restore documentation for PostgreSQL
@@ -473,4 +477,4 @@ Assumptions for MVP:
 
 - If you want an even smaller first slice, split PR 2 into separate setup and CI PRs.
 - If spreadsheet import becomes important, add a later PR for CSV import/export after PR 7.
-- The roadmap intentionally reaches a solid single-user hosted MVP before considering multi-user or collaboration features.
+- The roadmap intentionally reaches a solid single-user hosted MVP on Vercel before considering multi-user or collaboration features.
