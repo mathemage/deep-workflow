@@ -43,6 +43,7 @@ Assumptions for MVP:
 
 - **Title:** `docs(product): Define MVP and architecture for deep-workflow`
 - **Branch:** `docs/mvp-architecture`
+- **Status:** Completed in PR #9 on branch `docs/mvp-architecture-8`
 - **Goal:** lock the product shape and technical direction before code generation starts
 - **PR body:**
 
