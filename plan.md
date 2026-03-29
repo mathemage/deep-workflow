@@ -20,7 +20,7 @@ Recommended stack for v1:
 - Tailwind CSS for responsive, polished UI
 - Vercel for production hosting and pull request preview deployments
 
-Keep `README.md`'s stack summary aligned with this section. Detailed hosting guidance for Vercel production and PR previews lives in this plan, especially PR 9 below.
+Keep `README.md`'s stack summary aligned with this section. Detailed hosting guidance for Vercel production and PR previews lives in this plan, especially roadmap item 9 below.
 
 Why this stack:
 
@@ -37,9 +37,9 @@ Assumptions for MVP:
 - start with responsive web, then add PWA polish
 - timer state is server-backed via timestamps so refreshes and device switching stay accurate
 
-## PR roadmap
+## Roadmap
 
-### PR 1
+### Roadmap item 1
 
 - **Title:** `docs(product): Define MVP and architecture for deep-workflow`
 - **Branch:** `docs/mvp-architecture`
@@ -94,7 +94,7 @@ Assumptions for MVP:
   Use the planned PR body from the roadmap.
   ```
 
-### PR 2
+### Roadmap item 2
 
 - **Title:** `chore(app): Bootstrap Django project, tooling, and CI`
 - **Branch:** `chore/bootstrap-django`
@@ -143,7 +143,7 @@ Assumptions for MVP:
   Keep the scope foundational only. Do not add business features yet. Add or update tests and docs where appropriate. Use scoped commit messages with the issue number, then open the PR with the planned title and body.
   ```
 
-### PR 3
+### Roadmap item 3
 
 - **Title:** `feat(auth): Add authentication and user preferences`
 - **Branch:** `feat/auth-preferences`
@@ -190,7 +190,7 @@ Assumptions for MVP:
   Keep the UX simple and production-minded. Add tests for auth and preferences. Update docs as needed. Use scoped commit messages with the issue number, then open the PR with the planned title and body.
   ```
 
-### PR 4
+### Roadmap item 4
 
 - **Title:** `feat(model): Add daily sheet and work session domain models`
 - **Branch:** `feat/session-models`
@@ -239,7 +239,7 @@ Assumptions for MVP:
   Register the models in Django admin and add model tests. Keep this PR focused on backend/domain structure, not UI polish. Use scoped commit messages with the issue number, then open the PR with the planned title and body.
   ```
 
-### PR 5
+### Roadmap item 5
 
 - **Title:** `feat(sheet): Build the responsive daily sheet UI`
 - **Branch:** `feat/daily-sheet-ui`
@@ -286,7 +286,7 @@ Assumptions for MVP:
   Use Django templates plus HTMX/Alpine only where they genuinely improve UX. Keep this PR focused on CRUD and layout, not timer logic. Add tests and update docs as needed. Use scoped commit messages with the issue number, then open the PR with the planned title and body.
   ```
 
-### PR 6
+### Roadmap item 6
 
 - **Title:** `feat(timer): Add synced 45-minute session timer and state transitions`
 - **Branch:** `feat/synced-session-timer`
@@ -332,7 +332,7 @@ Assumptions for MVP:
   Do not add websockets unless clearly necessary; prefer a simpler approach that keeps server truth authoritative. Add tests for state transitions and time calculations. Use scoped commit messages with the issue number, then open the PR with the planned title and body.
   ```
 
-### PR 7
+### Roadmap item 7
 
 - **Title:** `feat(rules): Auto-generate daily sheets and add progress summaries`
 - **Branch:** `feat/daily-rules-summary`
@@ -379,7 +379,7 @@ Assumptions for MVP:
   Keep this PR focused on automation and summaries. Do not mix in PWA or deployment work. Add tests for timezone-sensitive day generation and summary calculations. Use scoped commit messages with the issue number, then open the PR with the planned title and body.
   ```
 
-### PR 8
+### Roadmap item 8
 
 - **Title:** `feat(mobile): Polish the smartphone UX and add PWA basics`
 - **Branch:** `feat/mobile-pwa`
@@ -426,7 +426,7 @@ Assumptions for MVP:
   Avoid turning this into a broad redesign. Focus on the existing key flows and make them feel excellent on phones. Add tests where appropriate and update docs as needed. Use scoped commit messages with the issue number, then open the PR with the planned title and body.
   ```
 
-### PR 9
+### Roadmap item 9
 
 - **Title:** `chore(deploy): Prepare production deployment, backups, and monitoring`
 - **Branch:** `chore/production-deploy`
@@ -476,6 +476,6 @@ Assumptions for MVP:
 
 ## Notes
 
-- If you want an even smaller first slice, split PR 2 into separate setup and CI PRs.
-- If spreadsheet import becomes important, add a later PR for CSV import/export after PR 7.
+- If you want an even smaller first slice, split roadmap item 2 into separate setup and CI PRs.
+- If spreadsheet import becomes important, add a later roadmap item for CSV import/export after roadmap item 7.
 - The roadmap intentionally reaches a solid single-user hosted MVP on Vercel before considering multi-user or collaboration features.

@@ -66,7 +66,7 @@ To keep the first version simple and fast to iterate on, the recommended stack i
 - Tailwind CSS
 - Vercel for production hosting and pull request preview deployments
 
-This keeps the app strongly Python-first while still leaving room for a modern, responsive UI. For the detailed hosting roadmap and deployment expectations, see `plan.md`, especially PR 9.
+This keeps the app strongly Python-first while still leaving room for a modern, responsive UI. For the detailed hosting roadmap and deployment expectations, see `plan.md`, especially roadmap item 9.
 
 ## Roadmap
 
@@ -84,7 +84,7 @@ The implementation should land in small, reviewable PRs:
 
 ## Current foundation
 
-This repository now includes the foundational Django project scaffold for PR 2:
+This repository now includes the foundational Django project scaffold for roadmap item 2:
 
 - Django project and `core` app wiring
 - environment-based settings with `DATABASE_URL` support for PostgreSQL
