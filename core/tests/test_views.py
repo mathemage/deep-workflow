@@ -8,6 +8,12 @@ def test_homepage_requires_login(client) -> None:
     assertRedirects(response, f"{reverse('login')}?next={reverse('home')}")
 
 
+def test_accounts_login_redirect_preserves_next_parameter(client) -> None:
+    response = client.get(f"{reverse('accounts-login')}?next={reverse('preferences')}")
+
+    assertRedirects(response, f"{reverse('login')}?next={reverse('preferences')}")
+
+
 def test_health_endpoint_returns_ok(client) -> None:
     response = client.get(reverse("health"))
 

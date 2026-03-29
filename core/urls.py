@@ -12,7 +12,7 @@ urlpatterns = [
     path("health/", health, name="health"),
     path(
         "accounts/login/",
-        RedirectView.as_view(pattern_name="login", permanent=False),
+        RedirectView.as_view(pattern_name="login", permanent=False, query_string=True),
         name="accounts-login",
     ),
 ]

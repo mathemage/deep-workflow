@@ -3,7 +3,7 @@ from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.core.validators import MinValueValidator
-from django.db import models
+from django.db import IntegrityError, models
 from django.utils import timezone
 
 
@@ -38,5 +38,8 @@ class UserPreferences(models.Model):
 
     @classmethod
     def for_user(cls, user) -> "UserPreferences":
-        preferences, _ = cls.objects.get_or_create(user=user)
+        try:
+            preferences, _ = cls.objects.get_or_create(user=user)
+        except IntegrityError:
+            preferences = cls.objects.get(user=user)
         return preferences
