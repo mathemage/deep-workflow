@@ -9,6 +9,8 @@ class UserTimezoneMiddleware:
         self.get_response = get_response
 
     def __call__(self, request):
+        timezone_name = None
+
         if request.user.is_authenticated:
             timezone_name = settings.TIME_ZONE
             try:
@@ -16,8 +18,5 @@ class UserTimezoneMiddleware:
             except UserPreferences.DoesNotExist:
                 pass
 
-            timezone.activate(timezone_name)
-        else:
-            timezone.deactivate()
-
-        return self.get_response(request)
+        with timezone.override(timezone_name):
+            return self.get_response(request)
