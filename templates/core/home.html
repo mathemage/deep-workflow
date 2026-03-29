@@ -1,20 +1,32 @@
 {% extends "base.html" %}
 
-{% block title %}Home | deep-workflow{% endblock title %}
+{% block title %}Dashboard | deep-workflow{% endblock title %}
 
 {% block content %}
-  <section class="card">
-    <span class="eyebrow">Foundation</span>
-    <h1>A calm foundation for the deep-workflow app.</h1>
+  <section class="card stack-large">
+    <span class="eyebrow">Dashboard</span>
+    <h1>Ready for focused work.</h1>
     <p>
-      This bootstrap keeps the scope intentionally small: Django project wiring,
-      environment-driven settings, PostgreSQL readiness, a shared base template,
-      and the quality checks future feature PRs can rely on.
+      You are signed in as <strong>{{ request.user.get_username }}</strong>. This
+      account now has the minimum settings the app needs before the daily sheet
+      and timer land in follow-up PRs.
     </p>
-    <p>
-      The next product work will add authentication, the daily sheet, and the
-      synced 45-minute session workflow.
+    <dl class="details">
+      <div>
+        <dt>Timezone</dt>
+        <dd>{{ preferences.timezone }}</dd>
+      </div>
+      <div>
+        <dt>Default session duration</dt>
+        <dd>{{ preferences.default_session_duration_minutes }} minutes</dd>
+      </div>
+    </dl>
+    <p class="muted">
+      Confirm these defaults now so future session planning stays consistent
+      across devices.
     </p>
-    <p>Health check: <code>/health/</code></p>
+    <div class="actions">
+      <a class="button" href="{% url 'preferences' %}">Edit settings</a>
+    </div>
   </section>
 {% endblock content %}

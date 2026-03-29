@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+
+{% block title %}Settings | deep-workflow{% endblock title %}
+
+{% block content %}
+  <section class="card stack-large">
+    <span class="eyebrow">Settings</span>
+    <h1>Account defaults</h1>
+    <p class="muted">
+      These preferences shape the timezone-aware planning and session defaults
+      for your account.
+    </p>
+    <form method="post" class="stack-large">
+      {% csrf_token %}
+      {% if form.non_field_errors %}
+        <div class="message message-error">
+          {{ form.non_field_errors }}
+        </div>
+      {% endif %}
+      <div class="field">
+        <label for="{{ form.timezone.id_for_label }}">{{ form.timezone.label }}</label>
+        {{ form.timezone }}
+        <datalist id="timezone-options">
+          {% for timezone_name in timezone_options %}
+            <option value="{{ timezone_name }}"></option>
+          {% endfor %}
+        </datalist>
+        <p class="help">{{ form.timezone.help_text }}</p>
+        {% for error in form.timezone.errors %}
+          <p class="error">{{ error }}</p>
+        {% endfor %}
+      </div>
+      <div class="field">
+        <label for="{{ form.default_session_duration_minutes.id_for_label }}">
+          {{ form.default_session_duration_minutes.label }}
+        </label>
+        {{ form.default_session_duration_minutes }}
+        <p class="help">{{ form.default_session_duration_minutes.help_text }}</p>
+        {% for error in form.default_session_duration_minutes.errors %}
+          <p class="error">{{ error }}</p>
+        {% endfor %}
+      </div>
+      <div class="actions">
+        <button type="submit" class="button">Save settings</button>
+      </div>
+    </form>
+  </section>
+{% endblock content %}
