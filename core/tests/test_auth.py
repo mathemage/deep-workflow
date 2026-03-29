@@ -1,6 +1,7 @@
 import pytest
 from django.conf import settings
 from django.contrib.auth import get_user_model
+from django.test import Client
 from django.urls import reverse
 from pytest_django.asserts import (
     assertContains,
@@ -59,6 +60,26 @@ def test_login_respects_next_parameter(client, user) -> None:
     )
 
     assertRedirects(response, reverse("preferences"))
+
+
+def test_login_accepts_csrf_protected_post(user) -> None:
+    client = Client(enforce_csrf_checks=True)
+
+    response = client.get(reverse("login"))
+
+    assert response.status_code == 200
+    csrf_token = client.cookies["csrftoken"].value
+
+    response = client.post(
+        reverse("login"),
+        {
+            "username": user.username,
+            "password": "calm-focus-123",
+        },
+        HTTP_X_CSRFTOKEN=csrf_token,
+    )
+
+    assertRedirects(response, reverse("home"))
 
 
 def test_logout_redirects_to_login(client, user) -> None:
