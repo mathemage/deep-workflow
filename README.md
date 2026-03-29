@@ -2,7 +2,7 @@
 
 [![License: AGPL v3](https://img.shields.io/badge/License-AGPL_v3-blue.svg)](https://choosealicense.com/licenses/agpl-3.0/)
 
-`deep-workflow` is a hosted Python-based web app for planning and completing focused 45-minute deep-work sessions. It replaces a spreadsheet-style ritual with a calmer daily sheet that stays in sync across laptops and phones. Licensed under the AGPLv3.
+`deep-workflow` is a hosted Python-based web app for planning and completing focused 45-minute deep-work sessions. It replaces a spreadsheet-style ritual with a calmer daily sheet that stays in sync across laptops and phones. Licensed under the AGPL v3.
 
 ## Product vision
 
@@ -22,9 +22,9 @@ The app should stay calm, low-friction, and clearly focused on the next meaningf
 The first version should focus on a clean, dependable foundation:
 
 - authenticated access to the same account from multiple devices
-- a timezone-aware daily sheet showing three personal sessions and one admin session
+- a timezone-aware daily sheet, generated and displayed using each user's configured timezone, showing three personal sessions and one admin session
 - session goals, notes, and completion state
-- a server-backed 45-minute timer that survives refreshes and device switching
+- a 45-minute session timer whose start time and state are stored on the server so it survives refreshes and device switching
 - daily and weekly progress summaries
 - a responsive web experience first, with PWA polish later
 
