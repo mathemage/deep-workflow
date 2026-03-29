@@ -84,14 +84,15 @@ The implementation should land in small, reviewable PRs:
 
 ## Current foundation
 
-This repository now includes the foundational Django project scaffold for roadmap item 2:
+This repository now includes the first two implementation slices from the roadmap:
 
 - Django project and `core` app wiring
 - environment-based settings with `DATABASE_URL` support for PostgreSQL
-- a simple homepage, shared base template, and `/health/` endpoint
+- login/logout with protected app routes
+- per-user timezone and default session duration settings
 - Ruff linting/formatting, pytest-based tests, and GitHub Actions CI
 
-The follow-up roadmap items still apply; this PR intentionally stops short of product features such as authentication, session models, or timer behavior.
+The follow-up roadmap items still apply; this foundation intentionally stops short of daily sheet models, timer behavior, and progress summaries.
 
 ## Local development
 
@@ -108,10 +109,11 @@ python3 -m venv .venv
 python -m pip install -r requirements-dev.txt
 cp .env.example .env
 python manage.py migrate
+python manage.py createsuperuser
 python manage.py runserver
 ```
 
-The app will be available at `http://127.0.0.1:8000/`, and the health endpoint is available at `http://127.0.0.1:8000/health/`.
+The app will be available at `http://127.0.0.1:8000/`. Sign in at `http://127.0.0.1:8000/login/`, then use the settings page to choose your timezone and default session duration. The health endpoint remains available at `http://127.0.0.1:8000/health/`.
 
 ### PostgreSQL configuration
 
@@ -135,6 +137,7 @@ Run the foundational checks before opening a change:
 . .venv/bin/activate
 ruff check .
 ruff format --check .
+python manage.py check
 pytest
 ```
 

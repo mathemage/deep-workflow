@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+
+{% block title %}Log in | deep-workflow{% endblock title %}
+
+{% block content %}
+  <section class="card narrow stack-large">
+    <span class="eyebrow">Account</span>
+    <h1>Log in</h1>
+    <p class="muted">
+      Sign in to keep your deep-work routine and future session data synced
+      across devices.
+    </p>
+    <form method="post" class="stack-large">
+      {% csrf_token %}
+      {% if form.non_field_errors %}
+        <div class="message message-error">
+          {{ form.non_field_errors }}
+        </div>
+      {% endif %}
+      <div class="field">
+        <label for="{{ form.username.id_for_label }}">{{ form.username.label }}</label>
+        {{ form.username }}
+        {% for error in form.username.errors %}
+          <p class="error">{{ error }}</p>
+        {% endfor %}
+      </div>
+      <div class="field">
+        <label for="{{ form.password.id_for_label }}">{{ form.password.label }}</label>
+        {{ form.password }}
+        {% for error in form.password.errors %}
+          <p class="error">{{ error }}</p>
+        {% endfor %}
+      </div>
+      {% if redirect_field_value %}
+        <input type="hidden" name="{{ redirect_field_name }}" value="{{ redirect_field_value }}">
+      {% endif %}
+      <div class="actions">
+        <button type="submit" class="button">Log in</button>
+      </div>
+    </form>
+  </section>
+{% endblock content %}

@@ -1,13 +1,17 @@
 from django.urls import reverse
-from pytest_django.asserts import assertContains, assertTemplateUsed
+from pytest_django.asserts import assertRedirects
 
 
-def test_homepage_renders(client) -> None:
+def test_homepage_requires_login(client) -> None:
     response = client.get(reverse("home"))
 
-    assert response.status_code == 200
-    assertTemplateUsed(response, "core/home.html")
-    assertContains(response, "A calm foundation for the deep-workflow app.")
+    assertRedirects(response, f"{reverse('login')}?next={reverse('home')}")
+
+
+def test_accounts_login_redirect_preserves_next_parameter(client) -> None:
+    response = client.get(f"{reverse('accounts-login')}?next={reverse('preferences')}")
+
+    assertRedirects(response, f"{reverse('login')}?next={reverse('preferences')}")
 
 
 def test_health_endpoint_returns_ok(client) -> None:
