@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+
+{% block title %}Home | deep-workflow{% endblock title %}
+
+{% block content %}
+  <section class="card">
+    <span class="eyebrow">Foundation</span>
+    <h1>A calm foundation for the deep-workflow app.</h1>
+    <p>
+      This bootstrap keeps the scope intentionally small: Django project wiring,
+      environment-driven settings, PostgreSQL readiness, a shared base template,
+      and the quality checks future feature PRs can rely on.
+    </p>
+    <p>
+      The next product work will add authentication, the daily sheet, and the
+      synced 45-minute session workflow.
+    </p>
+    <p>Health check: <code>/health/</code></p>
+  </section>
+{% endblock content %}

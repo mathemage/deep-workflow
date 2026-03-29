@@ -2,7 +2,7 @@
 
 [![License: AGPL v3](https://img.shields.io/badge/License-AGPL_v3-blue.svg)](https://choosealicense.com/licenses/agpl-3.0/)
 
-`deep-workflow` is a hosted Python-based web app for planning and completing focused 45-minute deep-work sessions. It replaces a spreadsheet-style ritual with a calmer daily sheet that stays in sync across laptops and phones. Licensed under the AGPL v3.
+`deep-workflow` is a hosted Django-based web app for planning and completing focused 45-minute deep-work sessions. It replaces a spreadsheet-style ritual with a calmer daily sheet that stays in sync across laptops and phones. Licensed under the AGPL v3.
 
 ## Product vision
 
@@ -66,7 +66,7 @@ To keep the first version simple and fast to iterate on, the recommended stack i
 - Tailwind CSS
 - Vercel for production hosting and pull request preview deployments
 
-This keeps the app strongly Python-first while still leaving room for a modern, responsive UI. For the detailed hosting roadmap and deployment expectations, see `plan.md`, especially PR 9.
+This keeps the app strongly Python-first while still leaving room for a modern, responsive UI. For the detailed hosting roadmap and deployment expectations, see `plan.md`, especially roadmap item 9.
 
 ## Roadmap
 
@@ -81,3 +81,61 @@ The implementation should land in small, reviewable PRs:
 7. auto-generate daily sheets and add progress summaries
 8. polish the mobile UX and add PWA basics
 9. prepare Vercel deployment, backups, and monitoring
+
+## Current foundation
+
+This repository now includes the foundational Django project scaffold for roadmap item 2:
+
+- Django project and `core` app wiring
+- environment-based settings with `DATABASE_URL` support for PostgreSQL
+- a simple homepage, shared base template, and `/health/` endpoint
+- Ruff linting/formatting, pytest-based tests, and GitHub Actions CI
+
+The follow-up roadmap items still apply; this PR intentionally stops short of product features such as authentication, session models, or timer behavior.
+
+## Local development
+
+Prerequisites:
+
+- Python 3.12+
+- PostgreSQL 16+ if you want local PostgreSQL instead of the default SQLite fallback
+
+Bootstrap the project:
+
+```bash
+python3 -m venv .venv
+. .venv/bin/activate
+python -m pip install -r requirements-dev.txt
+cp .env.example .env
+python manage.py migrate
+python manage.py runserver
+```
+
+The app will be available at `http://127.0.0.1:8000/`, and the health endpoint is available at `http://127.0.0.1:8000/health/`.
+
+### PostgreSQL configuration
+
+The settings are driven by environment variables and switch to PostgreSQL automatically when `DATABASE_URL` is set. For local PostgreSQL development, create a database and update `.env` with a URL such as:
+
+```bash
+createdb deep_workflow
+```
+
+```env
+DATABASE_URL=postgresql://postgres:postgres@127.0.0.1:5432/deep_workflow
+```
+
+If `DATABASE_URL` is omitted, Django falls back to SQLite for the quickest local bootstrap.
+
+## Quality checks
+
+Run the foundational checks before opening a change:
+
+```bash
+. .venv/bin/activate
+ruff check .
+ruff format --check .
+pytest
+```
+
+CI runs the same lint and test commands against PostgreSQL on every push and pull request.
