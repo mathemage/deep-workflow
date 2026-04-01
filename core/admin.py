@@ -1,4 +1,5 @@
 from django.contrib import admin
+from django.db.models import Count
 
 from .models import DailySheet, UserPreferences, WorkSession
 
@@ -43,9 +44,13 @@ class DailySheetAdmin(admin.ModelAdmin):
     ordering = ("-sheet_date", "user__username")
     inlines = [WorkSessionInline]
 
-    @admin.display(description="Sessions")
+    def get_queryset(self, request):
+        queryset = super().get_queryset(request)
+        return queryset.annotate(work_session_count=Count("work_sessions"))
+
+    @admin.display(description="Sessions", ordering="work_session_count")
     def session_count(self, obj: DailySheet) -> int:
-        return obj.work_sessions.count()
+        return getattr(obj, "work_session_count", obj.work_sessions.count())
 
 
 @admin.register(WorkSession)

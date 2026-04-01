@@ -15,6 +15,39 @@ def validate_timezone_name(value: str) -> None:
         raise ValidationError("Enter a valid timezone.") from exc
 
 
+class WorkSessionCategory(models.TextChoices):
+    PERSONAL = "personal", "Personal"
+    ADMIN = "admin", "Admin"
+
+
+class WorkSessionStatus(models.TextChoices):
+    PLANNED = "planned", "Planned"
+    ACTIVE = "active", "Active"
+    COMPLETED = "completed", "Completed"
+    SKIPPED = "skipped", "Skipped"
+
+
+class WorkSessionSlot(models.IntegerChoices):
+    PERSONAL_1 = 1, "Personal 1"
+    PERSONAL_2 = 2, "Personal 2"
+    PERSONAL_3 = 3, "Personal 3"
+    ADMIN = 4, "Admin"
+
+
+WORK_SESSION_DEFAULT_STRUCTURE = (
+    (WorkSessionSlot.PERSONAL_1, WorkSessionCategory.PERSONAL),
+    (WorkSessionSlot.PERSONAL_2, WorkSessionCategory.PERSONAL),
+    (WorkSessionSlot.PERSONAL_3, WorkSessionCategory.PERSONAL),
+    (WorkSessionSlot.ADMIN, WorkSessionCategory.ADMIN),
+)
+WORK_SESSION_PERSONAL_SLOTS = tuple(
+    slot
+    for slot, category in WORK_SESSION_DEFAULT_STRUCTURE
+    if category == WorkSessionCategory.PERSONAL
+)
+WORK_SESSION_CATEGORY_BY_SLOT = dict(WORK_SESSION_DEFAULT_STRUCTURE)
+
+
 class UserPreferences(models.Model):
     user = models.OneToOneField(
         settings.AUTH_USER_MODEL,
@@ -91,28 +124,10 @@ class WorkSessionQuerySet(models.QuerySet):
 
 
 class WorkSession(models.Model):
-    class Category(models.TextChoices):
-        PERSONAL = "personal", "Personal"
-        ADMIN = "admin", "Admin"
-
-    class Status(models.TextChoices):
-        PLANNED = "planned", "Planned"
-        ACTIVE = "active", "Active"
-        COMPLETED = "completed", "Completed"
-        SKIPPED = "skipped", "Skipped"
-
-    class Slot(models.IntegerChoices):
-        PERSONAL_1 = 1, "Personal 1"
-        PERSONAL_2 = 2, "Personal 2"
-        PERSONAL_3 = 3, "Personal 3"
-        ADMIN = 4, "Admin"
-
-    DEFAULT_STRUCTURE = (
-        (Slot.PERSONAL_1, Category.PERSONAL),
-        (Slot.PERSONAL_2, Category.PERSONAL),
-        (Slot.PERSONAL_3, Category.PERSONAL),
-        (Slot.ADMIN, Category.ADMIN),
-    )
+    Category = WorkSessionCategory
+    Status = WorkSessionStatus
+    Slot = WorkSessionSlot
+    DEFAULT_STRUCTURE = WORK_SESSION_DEFAULT_STRUCTURE
 
     objects = WorkSessionQuerySet.as_manager()
 
@@ -145,8 +160,14 @@ class WorkSession(models.Model):
             ),
             models.CheckConstraint(
                 condition=(
-                    (Q(slot__in=[1, 2, 3]) & Q(category="personal"))
-                    | (Q(slot=4) & Q(category="admin"))
+                    Q(
+                        slot__in=WORK_SESSION_PERSONAL_SLOTS,
+                        category=WorkSessionCategory.PERSONAL,
+                    )
+                    | Q(
+                        slot=WorkSessionSlot.ADMIN,
+                        category=WorkSessionCategory.ADMIN,
+                    )
                 ),
                 name="work_session_slot_category_match",
             ),
@@ -181,12 +202,4 @@ class WorkSession(models.Model):
 
     @classmethod
     def expected_category_for_slot(cls, slot: int | None) -> str | None:
-        if slot in {
-            cls.Slot.PERSONAL_1,
-            cls.Slot.PERSONAL_2,
-            cls.Slot.PERSONAL_3,
-        }:
-            return cls.Category.PERSONAL
-        if slot == cls.Slot.ADMIN:
-            return cls.Category.ADMIN
-        return None
+        return WORK_SESSION_CATEGORY_BY_SLOT.get(slot)

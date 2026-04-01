@@ -119,8 +119,8 @@ class Migration(migrations.Migration):
             model_name="worksession",
             constraint=models.CheckConstraint(
                 condition=models.Q(
-                    models.Q(("slot__in", [1, 2, 3]), ("category", "personal")),
-                    models.Q(("slot", 4), ("category", "admin")),
+                    models.Q(("category", "personal"), ("slot__in", (1, 2, 3))),
+                    models.Q(("category", "admin"), ("slot", 4)),
                     _connector="OR",
                 ),
                 name="work_session_slot_category_match",
