@@ -84,15 +84,16 @@ The implementation should land in small, reviewable PRs:
 
 ## Current foundation
 
-This repository now includes the first two implementation slices from the roadmap:
+This repository now includes the first four implementation slices from the roadmap:
 
 - Django project and `core` app wiring
 - environment-based settings with `DATABASE_URL` support for PostgreSQL
 - login/logout with protected app routes
 - per-user timezone and default session duration settings
+- daily sheet and work session domain models with migrations, admin registration, and tests
 - Ruff linting/formatting, pytest-based tests, and GitHub Actions CI
 
-The follow-up roadmap items still apply; this foundation intentionally stops short of daily sheet models, timer behavior, and progress summaries.
+The follow-up roadmap items still apply; this foundation intentionally stops short of the daily sheet UI, timer behavior, and progress summaries.
 
 ## Local development
 
