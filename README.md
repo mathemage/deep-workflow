@@ -84,16 +84,17 @@ The implementation should land in small, reviewable PRs:
 
 ## Current foundation
 
-This repository now includes the first four implementation slices from the roadmap:
+This repository now includes the foundation plus roadmap slices 1 through 5:
 
 - Django project and `core` app wiring
 - environment-based settings with `DATABASE_URL` support for PostgreSQL
 - login/logout with protected app routes
 - per-user timezone and default session duration settings
 - daily sheet and work session domain models with migrations, admin registration, and tests
+- a responsive daily sheet UI with previous/next day navigation and per-session goal, notes, and status editing
 - Ruff linting/formatting, pytest-based tests, and GitHub Actions CI
 
-The follow-up roadmap items still apply; this foundation intentionally stops short of the daily sheet UI, timer behavior, and progress summaries.
+The follow-up roadmap items still apply; this foundation intentionally stops short of synced timer behavior and progress summaries.
 
 ## Local development
 
@@ -114,7 +115,7 @@ python manage.py createsuperuser
 python manage.py runserver
 ```
 
-The app will be available at `http://127.0.0.1:8000/`. Sign in at `http://127.0.0.1:8000/login/`, then use the settings page to choose your timezone and default session duration. The health endpoint remains available at `http://127.0.0.1:8000/health/`.
+The app will be available at `http://127.0.0.1:8000/`. Sign in at `http://127.0.0.1:8000/login/`, then use the daily sheet to plan or update the four session cards. The settings page still lets you choose your timezone and default session duration. The health endpoint remains available at `http://127.0.0.1:8000/health/`.
 
 ### PostgreSQL configuration
 
