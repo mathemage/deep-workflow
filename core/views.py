@@ -239,13 +239,11 @@ def home(request: HttpRequest) -> HttpResponse:
 @require_POST
 def update_session_timer(request: HttpRequest, session_id: int) -> HttpResponse:
     with transaction.atomic():
-        list(
-            DailySheet.objects.select_for_update()
-            .filter(user=request.user)
-            .values_list("pk", flat=True)
-        )
+        request.user.__class__.objects.select_for_update().filter(
+            pk=request.user.pk
+        ).exists()
         session = get_object_or_404(
-            WorkSession.objects.select_related("daily_sheet"),
+            WorkSession.objects.select_for_update().select_related("daily_sheet"),
             pk=session_id,
             daily_sheet__user=request.user,
         )

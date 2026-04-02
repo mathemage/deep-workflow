@@ -18,8 +18,13 @@ document.addEventListener("DOMContentLoaded", () => {
       return;
     }
 
+    timerElement.textContent = formatDuration(initialRemainingSeconds);
+
+    if (initialRemainingSeconds <= 0) {
+      return;
+    }
+
     const startedAt = Date.now();
-    let intervalId = null;
 
     const tick = () => {
       const elapsedSeconds = Math.floor((Date.now() - startedAt) / 1000);
@@ -34,7 +39,7 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     };
 
+    const intervalId = window.setInterval(tick, 1000);
     tick();
-    intervalId = window.setInterval(tick, 1000);
   });
 });
