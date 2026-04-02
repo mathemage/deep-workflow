@@ -11,7 +11,7 @@
           <h1>{% if is_today %}Today{% else %}{{ selected_date|date:"l, F j" }}{% endif %}</h1>
           <p class="sheet-date">{{ selected_date|date:"l, F j, Y" }}</p>
         </div>
-        <div class="sheet-nav" aria-label="Day navigation">
+        <nav class="sheet-nav" aria-label="Day navigation">
           <a class="button button-secondary" href="{% url 'home' %}?date={{ previous_date|date:'Y-m-d' }}">
             Previous day
           </a>
@@ -21,7 +21,7 @@
           <a class="button button-secondary" href="{% url 'home' %}?date={{ next_date|date:'Y-m-d' }}">
             Next day
           </a>
-        </div>
+        </nav>
       </div>
       <p class="muted">
         Plan three personal sessions and one admin block. This screen stays

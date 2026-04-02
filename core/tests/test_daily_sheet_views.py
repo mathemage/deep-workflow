@@ -57,6 +57,15 @@ def test_home_loads_selected_day_and_navigation(client, user) -> None:
     assertContains(response, "?date=2026-04-06")
 
 
+def test_home_strips_whitespace_from_selected_day(client, user) -> None:
+    client.force_login(user)
+
+    response = client.get(reverse("home"), {"date": "2026-04-05 "})
+
+    assert response.status_code == 200
+    assert response.context["selected_date"] == date(2026, 4, 5)
+
+
 def test_home_rejects_invalid_selected_day(client, user) -> None:
     client.force_login(user)
 
@@ -106,7 +115,12 @@ def test_home_shows_errors_for_invalid_session_update(client, user) -> None:
     )
 
     assert response.status_code == 200
-    assertContains(response, "Ensure this value has at most 255 characters")
+    session_card = next(
+        card
+        for card in response.context["session_cards"]
+        if card["session"].pk == session.pk
+    )
+    assert "goal" in session_card["form"].errors
 
     session.refresh_from_db()
     assert session.goal == ""

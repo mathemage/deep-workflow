@@ -23,8 +23,10 @@ def resolve_sheet_date(request: HttpRequest) -> date:
     if not raw_date:
         return timezone.localdate()
 
+    normalized_date = raw_date.strip()
+
     try:
-        return date.fromisoformat(raw_date)
+        return date.fromisoformat(normalized_date)
     except ValueError as exc:
         raise Http404("Invalid daily sheet date.") from exc
 

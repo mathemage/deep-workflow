@@ -84,7 +84,7 @@ The implementation should land in small, reviewable PRs:
 
 ## Current foundation
 
-This repository now includes the first five implementation slices from the roadmap:
+This repository now includes the foundation plus roadmap slices 1 through 5:
 
 - Django project and `core` app wiring
 - environment-based settings with `DATABASE_URL` support for PostgreSQL
