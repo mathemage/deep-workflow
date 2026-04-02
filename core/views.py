@@ -103,6 +103,7 @@ def build_timer_context(session: WorkSession, *, now) -> dict[str, object]:
     return {
         "remaining_seconds": remaining_seconds,
         "remaining_display": format_duration_seconds(remaining_seconds),
+        "server_now_ms": int(now.timestamp() * 1000),
         "is_running": session.status == WorkSession.Status.ACTIVE,
         "summary": build_timer_summary(session),
         "actions": build_timer_actions(session),

@@ -263,6 +263,10 @@ def test_home_shows_active_timer_feedback_and_remaining_time(client, user) -> No
     assertContains(response, "Remaining time")
     assertContains(response, "30:00")
     assertContains(response, "Pause timer")
+    assertContains(
+        response,
+        f'data-server-now="{int(current_time.timestamp() * 1000)}"',
+    )
 
 
 def test_session_timer_action_skip_marks_session_skipped(client, user) -> None:

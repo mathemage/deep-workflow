@@ -12,24 +12,34 @@ document.addEventListener("DOMContentLoaded", () => {
     const initialRemainingSeconds = Number(
       timerElement.dataset.remainingSeconds || "0",
     );
+    const serverNow = Number(timerElement.dataset.serverNow || "NaN");
     const isRunning = timerElement.dataset.running === "true";
 
     if (!Number.isFinite(initialRemainingSeconds) || !isRunning) {
       return;
     }
 
-    timerElement.textContent = formatDuration(initialRemainingSeconds);
+    const clientNowAtStart = Date.now();
+    const startupDelaySeconds = Number.isFinite(serverNow)
+      ? Math.max(Math.floor((clientNowAtStart - serverNow) / 1000), 0)
+      : 0;
+    const adjustedInitialRemainingSeconds = Math.max(
+      initialRemainingSeconds - startupDelaySeconds,
+      0,
+    );
 
-    if (initialRemainingSeconds <= 0) {
+    timerElement.textContent = formatDuration(adjustedInitialRemainingSeconds);
+
+    if (adjustedInitialRemainingSeconds <= 0) {
       return;
     }
 
-    const startedAt = Date.now();
+    const startedAt = clientNowAtStart;
 
     const tick = () => {
       const elapsedSeconds = Math.floor((Date.now() - startedAt) / 1000);
       const nextRemainingSeconds = Math.max(
-        initialRemainingSeconds - elapsedSeconds,
+        adjustedInitialRemainingSeconds - elapsedSeconds,
         0,
       );
       timerElement.textContent = formatDuration(nextRemainingSeconds);
