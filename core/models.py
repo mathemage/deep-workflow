@@ -241,6 +241,10 @@ class WorkSession(models.Model):
                 errors.setdefault("skipped_at", []).append(
                     "Active sessions cannot be skipped."
                 )
+            if self.has_other_active_session():
+                errors.setdefault("status", []).append(
+                    "Only one active session per user is allowed."
+                )
 
         if self.status == self.Status.PAUSED:
             if self.started_at is None:
@@ -351,15 +355,21 @@ class WorkSession(models.Model):
         total_seconds = self.duration_minutes * 60
         return max(total_seconds - self.current_elapsed_seconds(now=now), 0)
 
-    def ensure_no_other_active_session(self) -> None:
-        if (
+    def has_other_active_session(self) -> bool:
+        if self.daily_sheet_id is None:
+            return False
+
+        return (
             WorkSession.objects.filter(
                 daily_sheet__user_id=self.daily_sheet.user_id,
                 status=self.Status.ACTIVE,
             )
             .exclude(pk=self.pk)
             .exists()
-        ):
+        )
+
+    def ensure_no_other_active_session(self) -> None:
+        if self.has_other_active_session():
             raise ValidationError(
                 "Pause or complete the other active session before starting this one."
             )

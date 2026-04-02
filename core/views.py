@@ -239,9 +239,8 @@ def home(request: HttpRequest) -> HttpResponse:
 @require_POST
 def update_session_timer(request: HttpRequest, session_id: int) -> HttpResponse:
     with transaction.atomic():
-        request.user.__class__.objects.select_for_update().filter(
-            pk=request.user.pk
-        ).exists()
+        # Lock the user row so concurrent timer updates for this user are serialized.
+        request.user.__class__.objects.select_for_update().get(pk=request.user.pk)
         session = get_object_or_404(
             WorkSession.objects.select_for_update().select_related("daily_sheet"),
             pk=session_id,

@@ -252,6 +252,27 @@ def test_work_session_prevents_second_active_session_for_same_user(user) -> None
         second_session.start(now=start_time + timedelta(minutes=1))
 
 
+def test_work_session_clean_blocks_multiple_active_sessions_on_direct_save(
+    user,
+) -> None:
+    sheet = DailySheet.objects.create(user=user, sheet_date=date(2026, 4, 1))
+    first_session = sheet.work_sessions.get(slot=WorkSession.Slot.PERSONAL_1)
+    second_session = sheet.work_sessions.get(slot=WorkSession.Slot.PERSONAL_2)
+    start_time = datetime(2026, 4, 1, 9, 0, tzinfo=dt_timezone.utc)
+
+    first_session.start(now=start_time)
+
+    second_session.status = WorkSession.Status.ACTIVE
+    second_session.started_at = start_time + timedelta(minutes=1)
+    second_session.active_started_at = start_time + timedelta(minutes=1)
+
+    with pytest.raises(
+        ValidationError,
+        match="Only one active session per user is allowed.",
+    ):
+        second_session.save()
+
+
 def test_work_session_skip_and_mark_planned_reset_timer_fields(user) -> None:
     sheet = DailySheet.objects.create(user=user, sheet_date=date(2026, 4, 1))
     session = sheet.work_sessions.get(slot=WorkSession.Slot.ADMIN)

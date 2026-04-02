@@ -233,6 +233,44 @@ def test_home_shows_active_timer_feedback_and_remaining_time(client, user) -> No
     assertContains(response, "Pause timer")
 
 
+def test_session_timer_action_skip_marks_session_skipped(client, user) -> None:
+    client.force_login(user)
+    sheet = DailySheet.objects.create(user=user, sheet_date=date(2026, 4, 5))
+    session = sheet.work_sessions.get(slot=WorkSession.Slot.PERSONAL_1)
+
+    response = client.post(
+        reverse("session-timer", args=[session.pk]),
+        {"action": "skip"},
+        follow=True,
+    )
+
+    assert response.status_code == 200
+    assertContains(response, "Personal 1 marked skipped.")
+    session.refresh_from_db()
+    assert session.status == WorkSession.Status.SKIPPED
+
+
+def test_session_timer_action_mark_planned_returns_session_to_planned(
+    client,
+    user,
+) -> None:
+    client.force_login(user)
+    sheet = DailySheet.objects.create(user=user, sheet_date=date(2026, 4, 5))
+    session = sheet.work_sessions.get(slot=WorkSession.Slot.PERSONAL_2)
+    session.skip()
+
+    response = client.post(
+        reverse("session-timer", args=[session.pk]),
+        {"action": "mark_planned"},
+        follow=True,
+    )
+
+    assert response.status_code == 200
+    assertContains(response, "Personal 2 moved back to planned.")
+    session.refresh_from_db()
+    assert session.status == WorkSession.Status.PLANNED
+
+
 def test_session_timer_rejects_second_active_session_for_user(client, user) -> None:
     client.force_login(user)
     sheet = DailySheet.objects.create(user=user, sheet_date=date(2026, 4, 5))
