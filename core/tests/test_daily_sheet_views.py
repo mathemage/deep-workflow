@@ -100,6 +100,38 @@ def test_home_updates_work_session_fields(client, user) -> None:
     assert session.status == WorkSession.Status.PLANNED
 
 
+def test_home_updates_fields_without_clobbering_active_timer_state(
+    client,
+    user,
+) -> None:
+    client.force_login(user)
+    sheet = DailySheet.objects.create(user=user, sheet_date=date(2026, 4, 5))
+    session = sheet.work_sessions.get(slot=WorkSession.Slot.PERSONAL_2)
+    start_time = datetime(2026, 4, 5, 9, 0, tzinfo=dt_timezone.utc)
+    session.start(now=start_time)
+
+    response = client.post(
+        f"{reverse('home')}?date={sheet.sheet_date.isoformat()}",
+        {
+            "session_id": str(session.pk),
+            f"session-{session.pk}-goal": "Ship the timer polish",
+            f"session-{session.pk}-notes": "Keep the active timer intact.",
+        },
+        follow=True,
+    )
+
+    assert response.status_code == 200
+    assertContains(response, "Personal 2 saved.")
+
+    session.refresh_from_db()
+    assert session.goal == "Ship the timer polish"
+    assert session.notes == "Keep the active timer intact."
+    assert session.status == WorkSession.Status.ACTIVE
+    assert session.started_at == start_time
+    assert session.active_started_at == start_time
+    assert session.elapsed_seconds == 0
+
+
 def test_home_shows_errors_for_invalid_session_update(client, user) -> None:
     client.force_login(user)
     sheet = DailySheet.objects.create(user=user, sheet_date=date(2026, 4, 5))

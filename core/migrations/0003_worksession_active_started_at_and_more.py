@@ -7,6 +7,15 @@ from django.db import migrations, models
 def backfill_work_session_timer_fields(apps, schema_editor):
     UserPreferences = apps.get_model("core", "UserPreferences")
     WorkSession = apps.get_model("core", "WorkSession")
+    update_fields = [
+        "duration_minutes",
+        "started_at",
+        "active_started_at",
+        "elapsed_seconds",
+        "completed_at",
+        "skipped_at",
+    ]
+    batch_size = 500
 
     default_duration_by_user_id = dict(
         UserPreferences.objects.values_list(
@@ -14,8 +23,11 @@ def backfill_work_session_timer_fields(apps, schema_editor):
             "default_session_duration_minutes",
         )
     )
+    sessions_to_update = []
 
-    for session in WorkSession.objects.select_related("daily_sheet").all():
+    for session in WorkSession.objects.select_related("daily_sheet").iterator(
+        chunk_size=batch_size
+    ):
         session.duration_minutes = default_duration_by_user_id.get(
             session.daily_sheet.user_id,
             45,
@@ -53,15 +65,20 @@ def backfill_work_session_timer_fields(apps, schema_editor):
             session.skipped_at = None
             session.elapsed_seconds = 0
 
-        session.save(
-            update_fields=[
-                "duration_minutes",
-                "started_at",
-                "active_started_at",
-                "elapsed_seconds",
-                "completed_at",
-                "skipped_at",
-            ]
+        sessions_to_update.append(session)
+        if len(sessions_to_update) == batch_size:
+            WorkSession.objects.bulk_update(
+                sessions_to_update,
+                update_fields,
+                batch_size=batch_size,
+            )
+            sessions_to_update.clear()
+
+    if sessions_to_update:
+        WorkSession.objects.bulk_update(
+            sessions_to_update,
+            update_fields,
+            batch_size=batch_size,
         )
 
 

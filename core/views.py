@@ -202,34 +202,36 @@ def home(request: HttpRequest) -> HttpResponse:
     preferences = UserPreferences.for_user(request.user)
 
     if request.method == "POST":
-        try:
-            session_id = int(request.POST["session_id"])
-        except (KeyError, ValueError) as exc:
-            raise Http404("Session not found.") from exc
+        with transaction.atomic():
+            try:
+                session_id = int(request.POST["session_id"])
+            except (KeyError, ValueError) as exc:
+                raise Http404("Session not found.") from exc
 
-        session = get_object_or_404(
-            WorkSession.objects.select_related("daily_sheet"),
-            pk=session_id,
-            daily_sheet__user=request.user,
-        )
-        form = WorkSessionUpdateForm(
-            request.POST,
-            instance=session,
-            prefix=f"session-{session.pk}",
-        )
+            session = get_object_or_404(
+                WorkSession.objects.select_for_update().select_related("daily_sheet"),
+                pk=session_id,
+                daily_sheet__user=request.user,
+            )
+            form = WorkSessionUpdateForm(
+                request.POST,
+                instance=session,
+                prefix=f"session-{session.pk}",
+            )
 
-        if form.is_valid():
-            form.save()
-            messages.success(request, f"{session.get_slot_display()} saved.")
-            return redirect(build_session_redirect_url(session))
+            if form.is_valid():
+                session = form.save(commit=False)
+                session.save(update_fields=["goal", "notes", "updated_at"])
+                messages.success(request, f"{session.get_slot_display()} saved.")
+                return redirect(build_session_redirect_url(session))
 
-        context = build_home_context(
-            request.user,
-            preferences,
-            session.daily_sheet.sheet_date,
-            bound_form=form,
-        )
-        return render(request, "core/home.html", context)
+            context = build_home_context(
+                request.user,
+                preferences,
+                session.daily_sheet.sheet_date,
+                bound_form=form,
+            )
+            return render(request, "core/home.html", context)
 
     context = build_home_context(request.user, preferences, resolve_sheet_date(request))
     return render(request, "core/home.html", context)
