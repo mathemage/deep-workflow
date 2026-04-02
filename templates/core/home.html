@@ -1,32 +1,108 @@
 {% extends "base.html" %}
 
-{% block title %}Dashboard | deep-workflow{% endblock title %}
+{% block title %}Daily sheet | deep-workflow{% endblock title %}
 
 {% block content %}
-  <section class="card stack-large">
-    <span class="eyebrow">Dashboard</span>
-    <h1>Ready for focused work.</h1>
-    <p>
-      You are signed in as <strong>{{ request.user.get_username }}</strong>. This
-      account now has the minimum settings the app needs before the daily sheet
-      and timer land in follow-up PRs.
-    </p>
-    <dl class="details">
-      <div>
-        <dt>Timezone</dt>
-        <dd>{{ preferences.timezone }}</dd>
+  <section class="sheet-layout">
+    <div class="card sheet-header">
+      <div class="sheet-header-top">
+        <div class="sheet-heading">
+          <span class="eyebrow">Daily sheet</span>
+          <h1>{% if is_today %}Today{% else %}{{ selected_date|date:"l, F j" }}{% endif %}</h1>
+          <p class="sheet-date">{{ selected_date|date:"l, F j, Y" }}</p>
+        </div>
+        <div class="sheet-nav" aria-label="Day navigation">
+          <a class="button button-secondary" href="{% url 'home' %}?date={{ previous_date|date:'Y-m-d' }}">
+            Previous day
+          </a>
+          {% if not is_today %}
+            <a class="button button-secondary" href="{% url 'home' %}">Today</a>
+          {% endif %}
+          <a class="button button-secondary" href="{% url 'home' %}?date={{ next_date|date:'Y-m-d' }}">
+            Next day
+          </a>
+        </div>
       </div>
-      <div>
-        <dt>Default session duration</dt>
-        <dd>{{ preferences.default_session_duration_minutes }} minutes</dd>
-      </div>
-    </dl>
-    <p class="muted">
-      Confirm these defaults now so future session planning stays consistent
-      across devices.
-    </p>
-    <div class="actions">
-      <a class="button" href="{% url 'preferences' %}">Edit settings</a>
+      <p class="muted">
+        Plan three personal sessions and one admin block. This screen stays
+        focused on goal, notes, and status while timer behavior lands in a
+        follow-up PR.
+      </p>
+      <dl class="details">
+        <div>
+          <dt>Timezone</dt>
+          <dd>{{ preferences.timezone }}</dd>
+        </div>
+        <div>
+          <dt>Default session duration</dt>
+          <dd>{{ preferences.default_session_duration_minutes }} minutes</dd>
+        </div>
+      </dl>
+    </div>
+
+    <div class="sheet-grid">
+      {% for card in session_cards %}
+        {% with session=card.session form=card.form %}
+          <article id="session-{{ session.slot }}" class="card session-card session-card-{{ session.category }}">
+            <div class="session-card-header">
+              <div>
+                <span class="eyebrow">{{ session.get_category_display }} session</span>
+                <h2>{{ session.get_slot_display }}</h2>
+                <p class="session-meta">Current status: {{ session.get_status_display }}</p>
+              </div>
+              <span class="status-badge status-badge-{{ session.status }}">{{ session.get_status_display }}</span>
+            </div>
+
+            <div class="session-summary">
+              <section class="session-section">
+                <h3>Goal</h3>
+                {% if session.goal %}
+                  <p>{{ session.goal }}</p>
+                {% else %}
+                  <p class="empty-copy">Add a finishable outcome for this block.</p>
+                {% endif %}
+              </section>
+
+              <section class="session-section">
+                <h3>Notes</h3>
+                {% if session.notes %}
+                  <p class="text-block">{{ session.notes }}</p>
+                {% else %}
+                  <p class="empty-copy">Keep context, reminders, or blockers here.</p>
+                {% endif %}
+              </section>
+            </div>
+
+            <details class="session-editor"{% if form.errors %} open{% endif %}>
+              <summary>{% if session.goal or session.notes %}Edit session{% else %}Plan session{% endif %}</summary>
+              <form method="post" action="{% url 'home' %}?date={{ selected_date|date:'Y-m-d' }}" class="stack-large">
+                {% csrf_token %}
+                <input type="hidden" name="session_id" value="{{ session.pk }}">
+                {% if form.non_field_errors %}
+                  <div class="message message-error">
+                    {{ form.non_field_errors }}
+                  </div>
+                {% endif %}
+                {% for field in form %}
+                  <div class="field">
+                    <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                    {{ field }}
+                    {% if field.help_text %}
+                      <p class="help">{{ field.help_text }}</p>
+                    {% endif %}
+                    {% for error in field.errors %}
+                      <p class="error">{{ error }}</p>
+                    {% endfor %}
+                  </div>
+                {% endfor %}
+                <div class="actions">
+                  <button type="submit" class="button">Save {{ session.get_slot_display }}</button>
+                </div>
+              </form>
+            </details>
+          </article>
+        {% endwith %}
+      {% endfor %}
     </div>
   </section>
 {% endblock content %}

@@ -2,7 +2,7 @@ from zoneinfo import available_timezones
 
 from django import forms
 
-from .models import UserPreferences, validate_timezone_name
+from .models import UserPreferences, WorkSession, validate_timezone_name
 
 TIMEZONE_OPTIONS = tuple(sorted(available_timezones()))
 
@@ -42,3 +42,27 @@ class UserPreferencesForm(forms.ModelForm):
         value = self.cleaned_data["timezone"].strip()
         validate_timezone_name(value)
         return value
+
+
+class WorkSessionUpdateForm(forms.ModelForm):
+    class Meta:
+        model = WorkSession
+        fields = ("goal", "notes", "status")
+        help_texts = {
+            "goal": "Keep it concrete and finishable.",
+            "notes": "Optional context, blockers, or follow-up notes.",
+            "status": (
+                "Reflect whether the session is planned, active, completed, or skipped."
+            ),
+        }
+        widgets = {
+            "goal": forms.TextInput(
+                attrs={"placeholder": "What would make this session feel complete?"}
+            ),
+            "notes": forms.Textarea(
+                attrs={
+                    "placeholder": "Capture context, reminders, or next steps.",
+                    "rows": 4,
+                }
+            ),
+        }

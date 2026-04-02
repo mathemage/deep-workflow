@@ -51,7 +51,7 @@ body {
 }
 
 .site-main {
-  max-width: 48rem;
+  max-width: 64rem;
   margin: 0 auto;
   padding: 2rem 1.5rem 3rem;
 }
@@ -108,12 +108,14 @@ label {
 }
 
 input,
+textarea,
 select,
 button {
   font: inherit;
 }
 
 input,
+textarea,
 select {
   width: 100%;
   box-sizing: border-box;
@@ -125,6 +127,7 @@ select {
 }
 
 input:focus,
+textarea:focus,
 select:focus,
 button:focus {
   outline: 2px solid #93c5fd;
@@ -203,6 +206,16 @@ button:focus {
   background: #1e293b;
 }
 
+.button-secondary {
+  border: 1px solid #cbd5e1;
+  background: #ffffff;
+  color: #0f172a;
+}
+
+.button-secondary:hover {
+  background: #f8fafc;
+}
+
 .button-link {
   padding: 0;
   border: 0;
@@ -235,6 +248,151 @@ button:focus {
   font-weight: 600;
 }
 
+.sheet-layout {
+  display: grid;
+  gap: 1.5rem;
+}
+
+.sheet-header {
+  display: grid;
+  gap: 1rem;
+}
+
+.sheet-header-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.sheet-date {
+  margin: 0;
+  color: #475569;
+  font-size: 1.05rem;
+  font-weight: 600;
+}
+
+.sheet-nav {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.sheet-grid {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(18rem, 1fr));
+}
+
+.session-card {
+  display: grid;
+  gap: 1rem;
+}
+
+.session-card-personal {
+  border-top: 0.35rem solid #38bdf8;
+}
+
+.session-card-admin {
+  border-top: 0.35rem solid #f59e0b;
+}
+
+.session-card-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.session-card-header h2,
+.session-section h3 {
+  margin: 0;
+}
+
+.session-card-header h2 {
+  margin-top: 0.25rem;
+  font-size: 1.4rem;
+  line-height: 1.2;
+}
+
+.session-meta {
+  margin: 0.35rem 0 0;
+  color: #475569;
+}
+
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.35rem 0.65rem;
+  border-radius: 999px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.status-badge-planned {
+  background: #e2e8f0;
+  color: #334155;
+}
+
+.status-badge-active {
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+
+.status-badge-completed {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.status-badge-skipped {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+
+.session-summary {
+  display: grid;
+  gap: 1rem;
+}
+
+.session-section {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.session-section h3 {
+  color: #475569;
+  font-size: 0.9rem;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.empty-copy {
+  color: #64748b;
+  font-style: italic;
+}
+
+.text-block {
+  white-space: pre-wrap;
+}
+
+.session-editor {
+  padding-top: 1rem;
+  border-top: 1px solid #e2e8f0;
+}
+
+.session-editor summary {
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.session-editor[open] summary {
+  margin-bottom: 1rem;
+}
+
 @media (max-width: 640px) {
   .site-header {
     padding-inline: 1rem;
@@ -246,6 +404,10 @@ button:focus {
 
   .header-inner {
     align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .session-card-header {
     flex-direction: column;
   }
 }
