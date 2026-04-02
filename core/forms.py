@@ -47,13 +47,10 @@ class UserPreferencesForm(forms.ModelForm):
 class WorkSessionUpdateForm(forms.ModelForm):
     class Meta:
         model = WorkSession
-        fields = ("goal", "notes", "status")
+        fields = ("goal", "notes")
         help_texts = {
             "goal": "Keep it concrete and finishable.",
             "notes": "Optional context, blockers, or follow-up notes.",
-            "status": (
-                "Reflect whether the session is planned, active, completed, or skipped."
-            ),
         }
         widgets = {
             "goal": forms.TextInput(
