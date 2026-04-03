@@ -1,4 +1,4 @@
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta
 
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
@@ -66,6 +66,23 @@ def format_duration_seconds(total_seconds: int) -> str:
     return f"{minutes}:{seconds:02d}"
 
 
+def format_accessible_remaining(total_seconds: int) -> str:
+    clamped_seconds = max(total_seconds, 0)
+
+    if clamped_seconds == 0:
+        return "Time is up."
+
+    minutes, seconds = divmod(clamped_seconds, 60)
+    parts = []
+
+    if minutes:
+        parts.append(f"{minutes} minute{'s' if minutes != 1 else ''}")
+    if seconds:
+        parts.append(f"{seconds} second{'s' if seconds != 1 else ''}")
+
+    return f"{' '.join(parts)} remaining."
+
+
 def build_timer_actions(session: WorkSession) -> list[dict[str, str]]:
     if session.can_start():
         action_keys = ("start", "skip")
@@ -98,11 +115,12 @@ def build_timer_summary(session: WorkSession) -> str:
     return f"{duration_display} ready when you start."
 
 
-def build_timer_context(session: WorkSession, *, now) -> dict[str, object]:
+def build_timer_context(session: WorkSession, *, now: datetime) -> dict[str, object]:
     remaining_seconds = session.remaining_seconds(now=now)
     return {
         "remaining_seconds": remaining_seconds,
         "remaining_display": format_duration_seconds(remaining_seconds),
+        "announcement_display": format_accessible_remaining(remaining_seconds),
         "server_now_ms": int(now.timestamp() * 1000),
         "is_running": session.status == WorkSession.Status.ACTIVE,
         "summary": build_timer_summary(session),
@@ -114,7 +132,7 @@ def build_session_cards(
     sessions: list[WorkSession],
     *,
     bound_form: WorkSessionUpdateForm | None = None,
-    now,
+    now: datetime,
 ) -> list[dict[str, object]]:
     session_cards = []
 

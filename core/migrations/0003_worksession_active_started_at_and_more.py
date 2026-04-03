@@ -17,69 +17,72 @@ def backfill_work_session_timer_fields(apps, schema_editor):
     ]
     batch_size = 500
 
-    default_duration_by_user_id = dict(
-        UserPreferences.objects.values_list(
-            "user_id",
-            "default_session_duration_minutes",
+    def process_session_batch(sessions):
+        default_duration_by_user_id = dict(
+            UserPreferences.objects.filter(
+                user_id__in={session.daily_sheet.user_id for session in sessions}
+            ).values_list(
+                "user_id",
+                "default_session_duration_minutes",
+            )
         )
-    )
+
+        for session in sessions:
+            session.duration_minutes = default_duration_by_user_id.get(
+                session.daily_sheet.user_id,
+                45,
+            )
+
+            if session.status == "active":
+                if session.started_at is None:
+                    session.started_at = session.updated_at
+                session.active_started_at = session.started_at
+                session.completed_at = None
+                session.skipped_at = None
+                session.elapsed_seconds = 0
+            elif session.status == "completed":
+                if session.started_at is None:
+                    session.started_at = session.updated_at
+                if session.completed_at is None:
+                    session.completed_at = session.updated_at
+                session.active_started_at = None
+                session.skipped_at = None
+                session.elapsed_seconds = max(
+                    int((session.completed_at - session.started_at).total_seconds()),
+                    0,
+                )
+            elif session.status == "skipped":
+                session.started_at = None
+                session.active_started_at = None
+                session.completed_at = None
+                if session.skipped_at is None:
+                    session.skipped_at = session.updated_at
+                session.elapsed_seconds = 0
+            else:
+                session.started_at = None
+                session.active_started_at = None
+                session.completed_at = None
+                session.skipped_at = None
+                session.elapsed_seconds = 0
+
+        WorkSession.objects.bulk_update(
+            sessions,
+            update_fields,
+            batch_size=batch_size,
+        )
+
     sessions_to_update = []
 
     for session in WorkSession.objects.select_related("daily_sheet").iterator(
         chunk_size=batch_size
     ):
-        session.duration_minutes = default_duration_by_user_id.get(
-            session.daily_sheet.user_id,
-            45,
-        )
-
-        if session.status == "active":
-            if session.started_at is None:
-                session.started_at = session.updated_at
-            session.active_started_at = session.started_at
-            session.completed_at = None
-            session.skipped_at = None
-            session.elapsed_seconds = 0
-        elif session.status == "completed":
-            if session.started_at is None:
-                session.started_at = session.updated_at
-            if session.completed_at is None:
-                session.completed_at = session.updated_at
-            session.active_started_at = None
-            session.skipped_at = None
-            session.elapsed_seconds = max(
-                int((session.completed_at - session.started_at).total_seconds()),
-                0,
-            )
-        elif session.status == "skipped":
-            session.started_at = None
-            session.active_started_at = None
-            session.completed_at = None
-            if session.skipped_at is None:
-                session.skipped_at = session.updated_at
-            session.elapsed_seconds = 0
-        else:
-            session.started_at = None
-            session.active_started_at = None
-            session.completed_at = None
-            session.skipped_at = None
-            session.elapsed_seconds = 0
-
         sessions_to_update.append(session)
         if len(sessions_to_update) == batch_size:
-            WorkSession.objects.bulk_update(
-                sessions_to_update,
-                update_fields,
-                batch_size=batch_size,
-            )
+            process_session_batch(sessions_to_update)
             sessions_to_update.clear()
 
     if sessions_to_update:
-        WorkSession.objects.bulk_update(
-            sessions_to_update,
-            update_fields,
-            batch_size=batch_size,
-        )
+        process_session_batch(sessions_to_update)
 
 
 class Migration(migrations.Migration):

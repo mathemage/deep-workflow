@@ -60,11 +60,18 @@
                   <p
                     class="timer-display"
                     data-session-timer
+                    data-live-region-id="timer-live-{{ session.pk }}"
                     data-remaining-seconds="{{ timer.remaining_seconds }}"
                     data-server-now="{{ timer.server_now_ms }}"
                     data-running="{% if timer.is_running %}true{% else %}false{% endif %}"
+                    role="timer"
+                    aria-live="off"
+                    aria-atomic="true"
                   >
                     {{ timer.remaining_display }}
+                  </p>
+                  <p id="timer-live-{{ session.pk }}" class="sr-only" aria-live="polite" aria-atomic="true">
+                    {{ timer.announcement_display }}
                   </p>
                 </div>
                 {% if timer.actions %}
