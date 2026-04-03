@@ -166,7 +166,10 @@ def completion_percentage(completed_sessions: int, total_sessions: int) -> int:
     if total_sessions <= 0:
         return 0
 
-    return round((completed_sessions / total_sessions) * 100)
+    rounded_percentage = ((completed_sessions * 200) + total_sessions) // (
+        2 * total_sessions
+    )
+    return max(0, min(rounded_percentage, 100))
 
 
 def build_daily_summary(sessions: list[WorkSession]) -> dict[str, int]:

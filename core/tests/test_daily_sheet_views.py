@@ -9,6 +9,7 @@ from django.urls import reverse
 from pytest_django.asserts import assertContains, assertTemplateUsed
 
 from core.models import DailySheet, UserPreferences, WorkSession
+from core.views import completion_percentage
 
 
 @pytest.fixture
@@ -22,6 +23,15 @@ def user(db):
 def complete_session(session: WorkSession, *, start_time: datetime) -> None:
     session.start(now=start_time)
     session.complete(now=start_time + timedelta(minutes=session.duration_minutes))
+
+
+def test_completion_percentage_uses_round_half_up() -> None:
+    assert completion_percentage(1, 8) == 13
+
+
+def test_completion_percentage_clamps_to_0_and_100() -> None:
+    assert completion_percentage(-1, 4) == 0
+    assert completion_percentage(5, 4) == 100
 
 
 def test_home_renders_daily_sheet_for_today(client, user) -> None:
