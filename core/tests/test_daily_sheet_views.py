@@ -47,6 +47,7 @@ def test_home_renders_daily_sheet_for_today(client, user) -> None:
     assertContains(response, "Admin")
     assertContains(response, "Previous day")
     assertContains(response, "Next day")
+    assertContains(response, "completed today")
 
 
 def test_home_uses_user_timezone_to_pick_todays_sheet(client, user) -> None:
@@ -80,6 +81,7 @@ def test_home_loads_selected_day_and_navigation(client, user) -> None:
     assert DailySheet.objects.filter(user=user, sheet_date=selected_date).exists()
     assertContains(response, "?date=2026-04-04")
     assertContains(response, "?date=2026-04-06")
+    assertContains(response, "completed on this day")
 
 
 def test_home_strips_whitespace_from_selected_day(client, user) -> None:

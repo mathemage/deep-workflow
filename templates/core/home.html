@@ -47,7 +47,7 @@
             <span class="eyebrow">Daily completion</span>
             <h2 id="daily-summary-title">{{ daily_summary.completed_sessions }}/{{ daily_summary.total_sessions }}</h2>
             <p class="summary-copy">
-              {{ daily_summary.completed_sessions }} session{{ daily_summary.completed_sessions|pluralize }} completed today{% if daily_summary.open_sessions %}, {{ daily_summary.open_sessions }} still open{% endif %}{% if daily_summary.skipped_sessions %}, {{ daily_summary.skipped_sessions }} skipped{% endif %}.
+              {{ daily_summary.completed_sessions }} session{{ daily_summary.completed_sessions|pluralize }} completed {% if is_today %}today{% else %}on this day{% endif %}{% if daily_summary.open_sessions %}, {{ daily_summary.open_sessions }} still open{% endif %}{% if daily_summary.skipped_sessions %}, {{ daily_summary.skipped_sessions }} skipped{% endif %}.
             </p>
           </div>
           <span class="summary-metric">{{ daily_summary.completion_percentage }}%</span>
