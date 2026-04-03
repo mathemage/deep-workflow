@@ -4,6 +4,7 @@ from unittest.mock import patch
 
 import pytest
 from django.contrib.auth import get_user_model
+from django.core.exceptions import ValidationError
 from django.urls import reverse
 from pytest_django.asserts import assertContains, assertTemplateUsed
 
@@ -153,6 +154,44 @@ def test_home_shows_errors_for_invalid_session_update(client, user) -> None:
         if card["session"].pk == session.pk
     )
     assert "goal" in session_card["form"].errors
+
+    session.refresh_from_db()
+    assert session.goal == ""
+    assert session.notes == ""
+    assert session.status == WorkSession.Status.PLANNED
+
+
+def test_home_shows_validation_error_when_save_rejects_session_update(
+    client,
+    user,
+) -> None:
+    client.force_login(user)
+    sheet = DailySheet.objects.create(user=user, sheet_date=date(2026, 4, 5))
+    session = sheet.work_sessions.get(slot=WorkSession.Slot.ADMIN)
+
+    with patch.object(
+        WorkSession,
+        "save",
+        side_effect=ValidationError("Timer state is inconsistent."),
+    ):
+        response = client.post(
+            f"{reverse('home')}?date={sheet.sheet_date.isoformat()}",
+            {
+                "session_id": str(session.pk),
+                f"session-{session.pk}-goal": "Tidy the session card",
+                f"session-{session.pk}-notes": "Keep the submitted values visible.",
+            },
+        )
+
+    assert response.status_code == 200
+    assertContains(response, "Timer state is inconsistent.")
+    session_card = next(
+        card
+        for card in response.context["session_cards"]
+        if card["session"].pk == session.pk
+    )
+    assert session_card["form"].non_field_errors()
+    assert session_card["form"].is_bound
 
     session.refresh_from_db()
     assert session.goal == ""
