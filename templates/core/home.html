@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load static %}
 
 {% block title %}Daily sheet | deep-workflow{% endblock title %}
 
@@ -24,9 +25,8 @@
         </nav>
       </div>
       <p class="muted">
-        Plan three personal sessions and one admin block. This screen stays
-        focused on goal, notes, and status while timer behavior lands in a
-        follow-up PR.
+        Plan three personal sessions and one admin block, then run the
+        server-backed timer without losing track across refreshes or devices.
       </p>
       <dl class="details">
         <div>
@@ -34,7 +34,7 @@
           <dd>{{ preferences.timezone }}</dd>
         </div>
         <div>
-          <dt>Default session duration</dt>
+          <dt>Default duration for new sessions</dt>
           <dd>{{ preferences.default_session_duration_minutes }} minutes</dd>
         </div>
       </dl>
@@ -42,7 +42,7 @@
 
     <div class="sheet-grid">
       {% for card in session_cards %}
-        {% with session=card.session form=card.form %}
+        {% with session=card.session form=card.form timer=card.timer %}
           <article id="session-{{ session.slot }}" class="card session-card session-card-{{ session.category }}">
             <div class="session-card-header">
               <div>
@@ -52,6 +52,41 @@
               </div>
               <span class="status-badge status-badge-{{ session.status }}">{{ session.get_status_display }}</span>
             </div>
+
+            <section class="session-timer" aria-label="{{ session.get_slot_display }} timer">
+              <div class="session-timer-top">
+                <div>
+                  <h3>Remaining time</h3>
+                  <p
+                    class="timer-display"
+                    data-session-timer
+                    data-live-region-id="timer-live-{{ session.pk }}"
+                    data-remaining-seconds="{{ timer.remaining_seconds }}"
+                    data-server-now="{{ timer.server_now_ms }}"
+                    data-running="{% if timer.is_running %}true{% else %}false{% endif %}"
+                    role="timer"
+                    aria-live="off"
+                    aria-atomic="true"
+                  >
+                    {{ timer.remaining_display }}
+                  </p>
+                  <p id="timer-live-{{ session.pk }}" class="sr-only" aria-live="polite" aria-atomic="true">
+                    {{ timer.announcement_display }}
+                  </p>
+                </div>
+                {% if timer.actions %}
+                  <form method="post" action="{% url 'session-timer' session.pk %}" class="actions session-timer-actions">
+                    {% csrf_token %}
+                    {% for action in timer.actions %}
+                      <button type="submit" name="action" value="{{ action.value }}" class="{{ action.button_class }}">
+                        {{ action.label }}
+                      </button>
+                    {% endfor %}
+                  </form>
+                {% endif %}
+              </div>
+              <p class="timer-copy">{{ timer.summary }}</p>
+            </section>
 
             <div class="session-summary">
               <section class="session-section">
@@ -106,3 +141,7 @@
     </div>
   </section>
 {% endblock content %}
+
+{% block extra_scripts %}
+  <script src="{% static 'js/session_timer.js' %}" defer></script>
+{% endblock extra_scripts %}

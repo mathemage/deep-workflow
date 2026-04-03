@@ -36,8 +36,9 @@
             </div>
           {% endfor %}
         </div>
-      {% endif %}
+        {% endif %}
       {% block content %}{% endblock content %}
     </main>
+    {% block extra_scripts %}{% endblock extra_scripts %}
   </body>
 </html>
