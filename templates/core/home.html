@@ -40,6 +40,99 @@
       </dl>
     </div>
 
+    <div class="summary-grid">
+      <section class="card summary-card" aria-labelledby="daily-summary-title">
+        <div class="summary-card-top">
+          <div>
+            <span class="eyebrow">Daily completion</span>
+            <h2 id="daily-summary-title">{{ daily_summary.completed_sessions }}/{{ daily_summary.total_sessions }}</h2>
+            <p class="summary-copy">
+              {{ daily_summary.completed_sessions }} session{{ daily_summary.completed_sessions|pluralize }} completed today{% if daily_summary.open_sessions %}, {{ daily_summary.open_sessions }} still open{% endif %}{% if daily_summary.skipped_sessions %}, {{ daily_summary.skipped_sessions }} skipped{% endif %}.
+            </p>
+          </div>
+          <span class="summary-metric">{{ daily_summary.completion_percentage }}%</span>
+        </div>
+        <div class="progress-track" aria-hidden="true">
+          <span class="progress-fill" style="width: {{ daily_summary.completion_percentage }}%"></span>
+        </div>
+        <dl class="summary-stats">
+          <div>
+            <dt>Completed</dt>
+            <dd>{{ daily_summary.completed_sessions }}</dd>
+          </div>
+          <div>
+            <dt>Open</dt>
+            <dd>{{ daily_summary.open_sessions }}</dd>
+          </div>
+          <div>
+            <dt>Skipped</dt>
+            <dd>{{ daily_summary.skipped_sessions }}</dd>
+          </div>
+        </dl>
+      </section>
+
+      <section class="card summary-card" aria-labelledby="weekly-summary-title">
+        <div class="summary-card-top">
+          <div>
+            <span class="eyebrow">Weekly completion</span>
+            <h2 id="weekly-summary-title">{{ weekly_summary.completed_sessions }}/{{ weekly_summary.total_sessions }}</h2>
+            <p class="summary-range">
+              {{ weekly_summary.week_start|date:"M j" }} - {{ weekly_summary.week_end|date:"M j" }}
+            </p>
+            <p class="summary-copy">
+              {{ weekly_summary.completed_sessions }} session{{ weekly_summary.completed_sessions|pluralize }} completed across this week.
+            </p>
+          </div>
+          <span class="summary-metric">{{ weekly_summary.completion_percentage }}%</span>
+        </div>
+        <div class="progress-track" aria-hidden="true">
+          <span class="progress-fill" style="width: {{ weekly_summary.completion_percentage }}%"></span>
+        </div>
+        <dl class="summary-stats">
+          <div>
+            <dt>Focused days</dt>
+            <dd>{{ weekly_summary.focused_days }}/7</dd>
+          </div>
+          <div>
+            <dt>Full days</dt>
+            <dd>{{ weekly_summary.completed_days }}/7</dd>
+          </div>
+          <div>
+            <dt>Completed</dt>
+            <dd>{{ weekly_summary.completed_sessions }}</dd>
+          </div>
+        </dl>
+      </section>
+
+      <section class="card summary-card" aria-labelledby="consistency-title">
+        <div>
+          <span class="eyebrow">Consistency</span>
+          <h2 id="consistency-title">{{ weekly_summary.streak_days }} day{{ weekly_summary.streak_days|pluralize }}</h2>
+          <p class="summary-copy">
+            {% if weekly_summary.streak_days %}
+              Consecutive days ending on this sheet with at least one completed session.
+            {% else %}
+              Complete one session to start a streak.
+            {% endif %}
+          </p>
+        </div>
+        <dl class="summary-stats">
+          <div>
+            <dt>In progress</dt>
+            <dd>{{ daily_summary.in_progress_sessions }}</dd>
+          </div>
+          <div>
+            <dt>Focused days</dt>
+            <dd>{{ weekly_summary.focused_days }}</dd>
+          </div>
+          <div>
+            <dt>Full days</dt>
+            <dd>{{ weekly_summary.completed_days }}</dd>
+          </div>
+        </dl>
+      </section>
+    </div>
+
     <div class="sheet-grid">
       {% for card in session_cards %}
         {% with session=card.session form=card.form timer=card.timer %}

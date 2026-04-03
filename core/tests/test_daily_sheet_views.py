@@ -19,6 +19,11 @@ def user(db):
     )
 
 
+def complete_session(session: WorkSession, *, start_time: datetime) -> None:
+    session.start(now=start_time)
+    session.complete(now=start_time + timedelta(minutes=session.duration_minutes))
+
+
 def test_home_renders_daily_sheet_for_today(client, user) -> None:
     client.force_login(user)
 
@@ -42,6 +47,23 @@ def test_home_renders_daily_sheet_for_today(client, user) -> None:
     assertContains(response, "Admin")
     assertContains(response, "Previous day")
     assertContains(response, "Next day")
+
+
+def test_home_uses_user_timezone_to_pick_todays_sheet(client, user) -> None:
+    UserPreferences.objects.create(user=user, timezone="America/Los_Angeles")
+    client.force_login(user)
+    current_time = datetime(2026, 4, 6, 6, 30, tzinfo=dt_timezone.utc)
+
+    with patch("core.views.timezone.now", return_value=current_time):
+        response = client.get(reverse("home"))
+
+    assert response.status_code == 200
+    assert response.context["selected_date"] == date(2026, 4, 5)
+    assert DailySheet.objects.filter(user=user, sheet_date=date(2026, 4, 5)).exists()
+    assert not DailySheet.objects.filter(
+        user=user,
+        sheet_date=date(2026, 4, 6),
+    ).exists()
 
 
 def test_home_loads_selected_day_and_navigation(client, user) -> None:
@@ -75,6 +97,105 @@ def test_home_rejects_invalid_selected_day(client, user) -> None:
     response = client.get(reverse("home"), {"date": "not-a-date"})
 
     assert response.status_code == 404
+
+
+def test_home_repairs_missing_default_session_structure(client, user) -> None:
+    selected_date = date(2026, 4, 5)
+    DailySheet.objects.bulk_create([DailySheet(user=user, sheet_date=selected_date)])
+    sheet = DailySheet.objects.get(user=user, sheet_date=selected_date)
+    client.force_login(user)
+
+    assert sheet.work_sessions.count() == 0
+
+    response = client.get(reverse("home"), {"date": selected_date.isoformat()})
+
+    assert response.status_code == 200
+    assert [card["session"].slot for card in response.context["session_cards"]] == [
+        WorkSession.Slot.PERSONAL_1,
+        WorkSession.Slot.PERSONAL_2,
+        WorkSession.Slot.PERSONAL_3,
+        WorkSession.Slot.ADMIN,
+    ]
+    repaired_sheet = DailySheet.objects.get(user=user, sheet_date=selected_date)
+    assert repaired_sheet.work_sessions.count() == 4
+
+
+def test_home_builds_daily_and_weekly_completion_summaries(client, user) -> None:
+    client.force_login(user)
+    selected_date = date(2026, 4, 8)
+
+    monday_sheet = DailySheet.objects.create(user=user, sheet_date=date(2026, 4, 6))
+    tuesday_sheet = DailySheet.objects.create(user=user, sheet_date=date(2026, 4, 7))
+    wednesday_sheet = DailySheet.objects.create(user=user, sheet_date=selected_date)
+
+    monday_start = datetime(2026, 4, 6, 9, 0, tzinfo=dt_timezone.utc)
+    for index, session in enumerate(monday_sheet.work_sessions.order_by("slot")):
+        complete_session(
+            session,
+            start_time=monday_start + timedelta(hours=index),
+        )
+
+    complete_session(
+        tuesday_sheet.work_sessions.get(slot=WorkSession.Slot.PERSONAL_1),
+        start_time=datetime(2026, 4, 7, 9, 0, tzinfo=dt_timezone.utc),
+    )
+    complete_session(
+        wednesday_sheet.work_sessions.get(slot=WorkSession.Slot.PERSONAL_1),
+        start_time=datetime(2026, 4, 8, 9, 0, tzinfo=dt_timezone.utc),
+    )
+    complete_session(
+        wednesday_sheet.work_sessions.get(slot=WorkSession.Slot.PERSONAL_2),
+        start_time=datetime(2026, 4, 8, 10, 0, tzinfo=dt_timezone.utc),
+    )
+
+    response = client.get(reverse("home"), {"date": selected_date.isoformat()})
+
+    assert response.status_code == 200
+    assertContains(response, "Daily completion")
+    assertContains(response, "Weekly completion")
+    assertContains(response, "Consistency")
+    assert response.context["daily_summary"] == {
+        "total_sessions": 4,
+        "completed_sessions": 2,
+        "completion_percentage": 50,
+        "in_progress_sessions": 0,
+        "open_sessions": 2,
+        "skipped_sessions": 0,
+    }
+    assert response.context["weekly_summary"] == {
+        "week_start": date(2026, 4, 6),
+        "week_end": date(2026, 4, 12),
+        "completed_sessions": 7,
+        "total_sessions": 28,
+        "completion_percentage": 25,
+        "focused_days": 3,
+        "completed_days": 1,
+        "streak_days": 3,
+    }
+
+
+def test_home_streak_breaks_when_the_previous_day_has_no_completed_sessions(
+    client,
+    user,
+) -> None:
+    client.force_login(user)
+    selected_date = date(2026, 4, 8)
+    monday_sheet = DailySheet.objects.create(user=user, sheet_date=date(2026, 4, 6))
+    wednesday_sheet = DailySheet.objects.create(user=user, sheet_date=selected_date)
+
+    complete_session(
+        monday_sheet.work_sessions.get(slot=WorkSession.Slot.PERSONAL_1),
+        start_time=datetime(2026, 4, 6, 9, 0, tzinfo=dt_timezone.utc),
+    )
+    complete_session(
+        wednesday_sheet.work_sessions.get(slot=WorkSession.Slot.PERSONAL_1),
+        start_time=datetime(2026, 4, 8, 9, 0, tzinfo=dt_timezone.utc),
+    )
+
+    response = client.get(reverse("home"), {"date": selected_date.isoformat()})
+
+    assert response.status_code == 200
+    assert response.context["weekly_summary"]["streak_days"] == 1
 
 
 def test_home_updates_work_session_fields(client, user) -> None:

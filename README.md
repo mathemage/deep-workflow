@@ -84,7 +84,7 @@ The implementation should land in small, reviewable PRs:
 
 ## Current foundation
 
-This repository now includes the foundation plus roadmap slices 1 through 6:
+This repository now includes the foundation plus roadmap slices 1 through 7:
 
 - Django project and `core` app wiring
 - environment-based settings with `DATABASE_URL` support for PostgreSQL
@@ -93,9 +93,11 @@ This repository now includes the foundation plus roadmap slices 1 through 6:
 - daily sheet and work session domain models with migrations, admin registration, and tests
 - a responsive daily sheet UI with previous/next day navigation plus per-session goal and notes editing
 - a server-backed session timer with start, pause, resume, and complete actions plus remaining-time feedback
+- auto-generated daily sheets that keep the fixed 3 personal + 1 admin structure intact
+- daily and weekly progress summaries with simple streak and completion indicators
 - Ruff linting/formatting, pytest-based tests, and GitHub Actions CI
 
-The follow-up roadmap items still apply; this foundation now includes the synced timer flow and intentionally stops short of progress summaries.
+The follow-up roadmap items still apply; this foundation now includes progress summaries and intentionally stops short of mobile/PWA polish and deployment work.
 
 ## Local development
 
