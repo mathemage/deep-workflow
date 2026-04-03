@@ -47,6 +47,7 @@ WORK_SESSION_PERSONAL_SLOTS = tuple(
     if category == WorkSessionCategory.PERSONAL
 )
 WORK_SESSION_CATEGORY_BY_SLOT = dict(WORK_SESSION_DEFAULT_STRUCTURE)
+WORK_SESSION_DEFAULT_SLOTS = frozenset(WORK_SESSION_CATEGORY_BY_SLOT)
 
 
 class UserPreferences(models.Model):
@@ -107,10 +108,25 @@ class DailySheet(models.Model):
             super().save(*args, **kwargs)
             self.ensure_default_work_sessions()
 
-    def ensure_default_work_sessions(self) -> None:
+    def ensure_default_work_sessions(
+        self,
+        *,
+        existing_slots: set[int] | None = None,
+    ) -> None:
+        if existing_slots is None:
+            existing_slots = set(self.work_sessions.values_list("slot", flat=True))
+        missing_structure = [
+            (slot, category)
+            for slot, category in WorkSession.DEFAULT_STRUCTURE
+            if slot not in existing_slots
+        ]
+
+        if not missing_structure and existing_slots == WORK_SESSION_DEFAULT_SLOTS:
+            return
+
         preferences = UserPreferences.for_user(self.user)
 
-        for slot, category in WorkSession.DEFAULT_STRUCTURE:
+        for slot, category in missing_structure:
             WorkSession.objects.get_or_create(
                 daily_sheet=self,
                 slot=slot,

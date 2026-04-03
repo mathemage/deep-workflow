@@ -1,3 +1,4 @@
+from collections import Counter
 from datetime import date, datetime, timedelta
 
 from django.contrib import messages
@@ -5,6 +6,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.views import LoginView
 from django.core.exceptions import ValidationError
 from django.db import transaction
+from django.db.models import Count, Q
 from django.http import Http404, HttpRequest, HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
@@ -57,6 +59,12 @@ def resolve_sheet_date(request: HttpRequest) -> date:
 def get_daily_sheet(user, sheet_date: date) -> tuple[DailySheet, list[WorkSession]]:
     sheet, _ = DailySheet.objects.get_or_create(user=user, sheet_date=sheet_date)
     sessions = list(sheet.work_sessions.order_by("slot"))
+    existing_slots = {session.slot for session in sessions}
+
+    if existing_slots != set(slot for slot, _ in WorkSession.DEFAULT_STRUCTURE):
+        sheet.ensure_default_work_sessions(existing_slots=existing_slots)
+        sessions = list(sheet.work_sessions.order_by("slot"))
+
     return sheet, sessions
 
 
@@ -154,6 +162,147 @@ def build_session_cards(
     return session_cards
 
 
+def completion_percentage(completed_sessions: int, total_sessions: int) -> int:
+    if total_sessions <= 0:
+        return 0
+
+    rounded_percentage = ((completed_sessions * 200) + total_sessions) // (
+        2 * total_sessions
+    )
+    return max(0, min(rounded_percentage, 100))
+
+
+def build_daily_summary(sessions: list[WorkSession]) -> dict[str, int]:
+    total_sessions = len(WorkSession.DEFAULT_STRUCTURE)
+    status_counts = Counter(session.status for session in sessions)
+    completed_sessions = status_counts[WorkSession.Status.COMPLETED]
+    active_sessions = status_counts[WorkSession.Status.ACTIVE]
+    paused_sessions = status_counts[WorkSession.Status.PAUSED]
+    planned_sessions = status_counts[WorkSession.Status.PLANNED]
+    skipped_sessions = status_counts[WorkSession.Status.SKIPPED]
+
+    return {
+        "total_sessions": total_sessions,
+        "completed_sessions": completed_sessions,
+        "completion_percentage": completion_percentage(
+            completed_sessions,
+            total_sessions,
+        ),
+        "in_progress_sessions": active_sessions + paused_sessions,
+        "open_sessions": active_sessions + paused_sessions + planned_sessions,
+        "skipped_sessions": skipped_sessions,
+    }
+
+
+def completed_sessions_by_date(
+    user,
+    *,
+    end_date: date,
+    start_date: date | None = None,
+) -> dict[date, int]:
+    filters: dict[str, object] = {
+        "user": user,
+        "sheet_date__lte": end_date,
+    }
+    if start_date is not None:
+        filters["sheet_date__gte"] = start_date
+
+    return dict(
+        DailySheet.objects.filter(**filters)
+        .annotate(
+            completed_sessions=Count(
+                "work_sessions",
+                filter=Q(work_sessions__status=WorkSession.Status.COMPLETED),
+            )
+        )
+        .filter(completed_sessions__gt=0)
+        .values_list("sheet_date", "completed_sessions")
+    )
+
+
+def completed_sheet_dates_desc(user, *, end_date: date):
+    return (
+        DailySheet.objects.filter(user=user, sheet_date__lte=end_date)
+        .annotate(
+            completed_sessions=Count(
+                "work_sessions",
+                filter=Q(work_sessions__status=WorkSession.Status.COMPLETED),
+            )
+        )
+        .filter(completed_sessions__gt=0)
+        .order_by("-sheet_date")
+        .values_list("sheet_date", flat=True)
+    )
+
+
+def build_completion_streak(
+    user,
+    *,
+    anchor_date: date,
+    recent_completed_lookup: dict[date, int] | None = None,
+    recent_start_date: date | None = None,
+) -> int:
+    streak_days = 0
+    current_date = anchor_date
+
+    if recent_completed_lookup is not None and recent_start_date is not None:
+        while current_date >= recent_start_date:
+            if recent_completed_lookup.get(current_date, 0) == 0:
+                return streak_days
+            streak_days += 1
+            current_date -= timedelta(days=1)
+
+    for completed_date in completed_sheet_dates_desc(
+        user,
+        end_date=current_date,
+    ).iterator():
+        if completed_date != current_date:
+            break
+        streak_days += 1
+        current_date -= timedelta(days=1)
+
+    return streak_days
+
+
+def build_weekly_summary(user, *, anchor_date: date) -> dict[str, object]:
+    week_start = anchor_date - timedelta(days=anchor_date.weekday())
+    week_end = week_start + timedelta(days=6)
+    completed_lookup = completed_sessions_by_date(
+        user,
+        start_date=week_start,
+        end_date=week_end,
+    )
+    daily_target = len(WorkSession.DEFAULT_STRUCTURE)
+    weekly_target = daily_target * 7
+    week_dates = [week_start + timedelta(days=offset) for offset in range(7)]
+    completed_sessions = sum(completed_lookup.values())
+
+    return {
+        "week_start": week_start,
+        "week_end": week_end,
+        "completed_sessions": completed_sessions,
+        "total_sessions": weekly_target,
+        "completion_percentage": completion_percentage(
+            completed_sessions,
+            weekly_target,
+        ),
+        "focused_days": sum(
+            1 for week_date in week_dates if completed_lookup.get(week_date, 0) > 0
+        ),
+        "completed_days": sum(
+            1
+            for week_date in week_dates
+            if completed_lookup.get(week_date, 0) == daily_target
+        ),
+        "streak_days": build_completion_streak(
+            user,
+            anchor_date=anchor_date,
+            recent_completed_lookup=completed_lookup,
+            recent_start_date=week_start,
+        ),
+    }
+
+
 def build_home_context(
     user,
     preferences: UserPreferences,
@@ -164,6 +313,8 @@ def build_home_context(
     sheet, sessions = get_daily_sheet(user, sheet_date)
     today = timezone.localdate()
     now = timezone.now()
+    daily_summary = build_daily_summary(sessions)
+    weekly_summary = build_weekly_summary(user, anchor_date=sheet.sheet_date)
 
     return {
         "preferences": preferences,
@@ -172,6 +323,8 @@ def build_home_context(
         "previous_date": sheet.sheet_date - timedelta(days=1),
         "next_date": sheet.sheet_date + timedelta(days=1),
         "is_today": sheet.sheet_date == today,
+        "daily_summary": daily_summary,
+        "weekly_summary": weekly_summary,
         "session_cards": build_session_cards(
             sessions,
             bound_form=bound_form,

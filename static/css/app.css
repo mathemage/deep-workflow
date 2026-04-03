@@ -298,6 +298,85 @@ button:focus {
   grid-template-columns: repeat(auto-fit, minmax(18rem, 1fr));
 }
 
+.summary-grid {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
+}
+
+.summary-card {
+  display: grid;
+  gap: 1rem;
+}
+
+.summary-card-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.summary-card h2 {
+  margin: 0.25rem 0 0;
+  font-size: clamp(2rem, 6vw, 2.5rem);
+  line-height: 1;
+}
+
+.summary-copy,
+.summary-range {
+  margin: 0.75rem 0 0;
+  color: #475569;
+}
+
+.summary-range {
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+.summary-metric {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 3.5rem;
+  padding: 0.5rem 0.75rem;
+  border-radius: 999px;
+  background: #e0f2fe;
+  color: #0369a1;
+  font-size: 0.95rem;
+  font-weight: 700;
+}
+
+.progress-track {
+  height: 0.75rem;
+  border-radius: 999px;
+  background: #e2e8f0;
+  overflow: hidden;
+}
+
+.progress-fill {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #38bdf8 0%, #0f172a 100%);
+}
+
+.summary-stats {
+  display: grid;
+  gap: 0.75rem;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.summary-stats dt {
+  color: #475569;
+  font-size: 0.9rem;
+}
+
+.summary-stats dd {
+  margin-top: 0.25rem;
+  font-size: 1.15rem;
+  font-weight: 700;
+}
+
 .session-card {
   display: grid;
   gap: 1rem;
@@ -469,7 +548,12 @@ button:focus {
     flex-direction: column;
   }
 
+  .summary-card-top,
   .session-timer-top {
     flex-direction: column;
+  }
+
+  .summary-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
