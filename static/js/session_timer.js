@@ -20,28 +20,36 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     const clientNowAtStart = Date.now();
-    const startupDelaySeconds = Number.isFinite(serverNow)
-      ? Math.max(Math.floor((clientNowAtStart - serverNow) / 1000), 0)
+    const hasServerNow = Number.isFinite(serverNow);
+    const serverClientOffsetMilliseconds = hasServerNow
+      ? serverNow - clientNowAtStart
       : 0;
-    const adjustedInitialRemainingSeconds = Math.max(
-      initialRemainingSeconds - startupDelaySeconds,
-      0,
-    );
+    const expiresAtServerTime = hasServerNow
+      ? serverNow + initialRemainingSeconds * 1000
+      : NaN;
 
-    timerElement.textContent = formatDuration(adjustedInitialRemainingSeconds);
+    const getRemainingSeconds = () => {
+      if (hasServerNow) {
+        const serverAlignedNow = Date.now() + serverClientOffsetMilliseconds;
+        return Math.max(
+          Math.ceil((expiresAtServerTime - serverAlignedNow) / 1000),
+          0,
+        );
+      }
 
-    if (adjustedInitialRemainingSeconds <= 0) {
+      const elapsedSeconds = Math.floor((Date.now() - clientNowAtStart) / 1000);
+      return Math.max(initialRemainingSeconds - elapsedSeconds, 0);
+    };
+
+    const initialDisplayRemainingSeconds = getRemainingSeconds();
+    timerElement.textContent = formatDuration(initialDisplayRemainingSeconds);
+
+    if (initialDisplayRemainingSeconds <= 0) {
       return;
     }
 
-    const startedAt = clientNowAtStart;
-
     const tick = () => {
-      const elapsedSeconds = Math.floor((Date.now() - startedAt) / 1000);
-      const nextRemainingSeconds = Math.max(
-        adjustedInitialRemainingSeconds - elapsedSeconds,
-        0,
-      );
+      const nextRemainingSeconds = getRemainingSeconds();
       timerElement.textContent = formatDuration(nextRemainingSeconds);
 
       if (nextRemainingSeconds === 0) {
