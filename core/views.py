@@ -57,8 +57,9 @@ def resolve_sheet_date(request: HttpRequest) -> date:
 
 
 def get_daily_sheet(user, sheet_date: date) -> tuple[DailySheet, list[WorkSession]]:
-    sheet, _ = DailySheet.objects.get_or_create(user=user, sheet_date=sheet_date)
-    sheet.ensure_default_work_sessions()
+    sheet, created = DailySheet.objects.get_or_create(user=user, sheet_date=sheet_date)
+    if not created:
+        sheet.ensure_default_work_sessions()
     sessions = list(sheet.work_sessions.order_by("slot"))
     return sheet, sessions
 
@@ -212,12 +213,44 @@ def completed_sessions_by_date(
     )
 
 
-def build_completion_streak(user, *, anchor_date: date) -> int:
-    completed_lookup = completed_sessions_by_date(user, end_date=anchor_date)
+def completed_sheet_dates_desc(user, *, end_date: date):
+    return (
+        DailySheet.objects.filter(user=user, sheet_date__lte=end_date)
+        .annotate(
+            completed_sessions=Count(
+                "work_sessions",
+                filter=Q(work_sessions__status=WorkSession.Status.COMPLETED),
+            )
+        )
+        .filter(completed_sessions__gt=0)
+        .order_by("-sheet_date")
+        .values_list("sheet_date", flat=True)
+    )
+
+
+def build_completion_streak(
+    user,
+    *,
+    anchor_date: date,
+    recent_completed_lookup: dict[date, int] | None = None,
+    recent_start_date: date | None = None,
+) -> int:
     streak_days = 0
     current_date = anchor_date
 
-    while completed_lookup.get(current_date, 0) > 0:
+    if recent_completed_lookup is not None and recent_start_date is not None:
+        while current_date >= recent_start_date:
+            if recent_completed_lookup.get(current_date, 0) == 0:
+                return streak_days
+            streak_days += 1
+            current_date -= timedelta(days=1)
+
+    for completed_date in completed_sheet_dates_desc(
+        user,
+        end_date=current_date,
+    ).iterator():
+        if completed_date != current_date:
+            break
         streak_days += 1
         current_date -= timedelta(days=1)
 
@@ -254,7 +287,12 @@ def build_weekly_summary(user, *, anchor_date: date) -> dict[str, object]:
             for week_date in week_dates
             if completed_lookup.get(week_date, 0) == daily_target
         ),
-        "streak_days": build_completion_streak(user, anchor_date=anchor_date),
+        "streak_days": build_completion_streak(
+            user,
+            anchor_date=anchor_date,
+            recent_completed_lookup=completed_lookup,
+            recent_start_date=week_start,
+        ),
     }
 
 

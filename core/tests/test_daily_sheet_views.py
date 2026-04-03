@@ -120,6 +120,23 @@ def test_home_repairs_missing_default_session_structure(client, user) -> None:
     assert repaired_sheet.work_sessions.count() == 4
 
 
+def test_home_skips_slot_repair_queries_when_structure_is_already_healthy(
+    client,
+    user,
+) -> None:
+    client.force_login(user)
+    sheet = DailySheet.objects.create(user=user, sheet_date=date(2026, 4, 5))
+
+    with patch.object(
+        WorkSession.objects,
+        "get_or_create",
+        side_effect=AssertionError("Healthy sheets should not need slot repair."),
+    ):
+        response = client.get(reverse("home"), {"date": sheet.sheet_date.isoformat()})
+
+    assert response.status_code == 200
+
+
 def test_home_builds_daily_and_weekly_completion_summaries(client, user) -> None:
     client.force_login(user)
     selected_date = date(2026, 4, 8)
@@ -193,6 +210,67 @@ def test_home_streak_breaks_when_the_previous_day_has_no_completed_sessions(
     )
 
     response = client.get(reverse("home"), {"date": selected_date.isoformat()})
+
+    assert response.status_code == 200
+    assert response.context["weekly_summary"]["streak_days"] == 1
+
+
+def test_home_streak_extends_before_the_current_week(client, user) -> None:
+    client.force_login(user)
+    selected_date = date(2026, 4, 8)
+    sunday_sheet = DailySheet.objects.create(user=user, sheet_date=date(2026, 4, 5))
+    monday_sheet = DailySheet.objects.create(user=user, sheet_date=date(2026, 4, 6))
+    tuesday_sheet = DailySheet.objects.create(user=user, sheet_date=date(2026, 4, 7))
+    wednesday_sheet = DailySheet.objects.create(user=user, sheet_date=selected_date)
+
+    complete_session(
+        sunday_sheet.work_sessions.get(slot=WorkSession.Slot.PERSONAL_1),
+        start_time=datetime(2026, 4, 5, 9, 0, tzinfo=dt_timezone.utc),
+    )
+    complete_session(
+        monday_sheet.work_sessions.get(slot=WorkSession.Slot.PERSONAL_1),
+        start_time=datetime(2026, 4, 6, 9, 0, tzinfo=dt_timezone.utc),
+    )
+    complete_session(
+        tuesday_sheet.work_sessions.get(slot=WorkSession.Slot.PERSONAL_1),
+        start_time=datetime(2026, 4, 7, 9, 0, tzinfo=dt_timezone.utc),
+    )
+    complete_session(
+        wednesday_sheet.work_sessions.get(slot=WorkSession.Slot.PERSONAL_1),
+        start_time=datetime(2026, 4, 8, 9, 0, tzinfo=dt_timezone.utc),
+    )
+
+    response = client.get(reverse("home"), {"date": selected_date.isoformat()})
+
+    assert response.status_code == 200
+    assert response.context["weekly_summary"]["streak_days"] == 4
+
+
+def test_home_streak_avoids_older_history_query_when_gap_is_in_current_week(
+    client,
+    user,
+) -> None:
+    client.force_login(user)
+    selected_date = date(2026, 4, 8)
+    monday_sheet = DailySheet.objects.create(user=user, sheet_date=date(2026, 4, 6))
+    wednesday_sheet = DailySheet.objects.create(user=user, sheet_date=selected_date)
+
+    complete_session(
+        monday_sheet.work_sessions.get(slot=WorkSession.Slot.PERSONAL_1),
+        start_time=datetime(2026, 4, 6, 9, 0, tzinfo=dt_timezone.utc),
+    )
+    complete_session(
+        wednesday_sheet.work_sessions.get(slot=WorkSession.Slot.PERSONAL_1),
+        start_time=datetime(2026, 4, 8, 9, 0, tzinfo=dt_timezone.utc),
+    )
+
+    with patch(
+        "core.views.completed_sheet_dates_desc",
+        side_effect=AssertionError(
+            "A current-week gap should end the streak without older history work."
+        ),
+    ):
+        response = client.get(reverse("home"), {"date": selected_date.isoformat()})
 
     assert response.status_code == 200
     assert response.context["weekly_summary"]["streak_days"] == 1
