@@ -128,8 +128,8 @@ def test_home_skips_slot_repair_queries_when_structure_is_already_healthy(
     sheet = DailySheet.objects.create(user=user, sheet_date=date(2026, 4, 5))
 
     with patch.object(
-        WorkSession.objects,
-        "get_or_create",
+        DailySheet,
+        "ensure_default_work_sessions",
         side_effect=AssertionError("Healthy sheets should not need slot repair."),
     ):
         response = client.get(reverse("home"), {"date": sheet.sheet_date.isoformat()})

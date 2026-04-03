@@ -108,8 +108,13 @@ class DailySheet(models.Model):
             super().save(*args, **kwargs)
             self.ensure_default_work_sessions()
 
-    def ensure_default_work_sessions(self) -> None:
-        existing_slots = set(self.work_sessions.values_list("slot", flat=True))
+    def ensure_default_work_sessions(
+        self,
+        *,
+        existing_slots: set[int] | None = None,
+    ) -> None:
+        if existing_slots is None:
+            existing_slots = set(self.work_sessions.values_list("slot", flat=True))
         missing_structure = [
             (slot, category)
             for slot, category in WorkSession.DEFAULT_STRUCTURE

@@ -57,10 +57,14 @@ def resolve_sheet_date(request: HttpRequest) -> date:
 
 
 def get_daily_sheet(user, sheet_date: date) -> tuple[DailySheet, list[WorkSession]]:
-    sheet, created = DailySheet.objects.get_or_create(user=user, sheet_date=sheet_date)
-    if not created:
-        sheet.ensure_default_work_sessions()
+    sheet, _ = DailySheet.objects.get_or_create(user=user, sheet_date=sheet_date)
     sessions = list(sheet.work_sessions.order_by("slot"))
+    existing_slots = {session.slot for session in sessions}
+
+    if existing_slots != set(slot for slot, _ in WorkSession.DEFAULT_STRUCTURE):
+        sheet.ensure_default_work_sessions(existing_slots=existing_slots)
+        sessions = list(sheet.work_sessions.order_by("slot"))
+
     return sheet, sessions
 
 
