@@ -3,9 +3,11 @@ const staticAssets = {{ asset_urls_json|safe }};
 
 self.addEventListener("install", (event) => {
   event.waitUntil(
-    caches.open(STATIC_CACHE).then((cache) => cache.addAll(staticAssets)),
+    caches
+      .open(STATIC_CACHE)
+      .then((cache) => cache.addAll(staticAssets))
+      .then(() => self.skipWaiting()),
   );
-  self.skipWaiting();
 });
 
 self.addEventListener("activate", (event) => {

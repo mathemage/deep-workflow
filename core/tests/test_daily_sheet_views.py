@@ -60,7 +60,7 @@ def test_home_renders_daily_sheet_for_today(client, user) -> None:
     assertContains(response, "completed today")
 
 
-def test_home_renders_install_controls_for_supported_browsers(client, user) -> None:
+def test_home_renders_install_controls_markup(client, user) -> None:
     client.force_login(user)
 
     response = client.get(reverse("home"))
