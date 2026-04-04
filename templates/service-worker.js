@@ -1,4 +1,5 @@
 const STATIC_CACHE = "deep-workflow-static-v1";
+const CACHE_PREFIX = "deep-workflow-";
 const staticAssets = {{ asset_urls_json|safe }};
 
 self.addEventListener("install", (event) => {
@@ -17,7 +18,10 @@ self.addEventListener("activate", (event) => {
       .then((cacheNames) =>
         Promise.all(
           cacheNames
-            .filter((cacheName) => cacheName !== STATIC_CACHE)
+            .filter(
+              (cacheName) =>
+                cacheName.startsWith(CACHE_PREFIX) && cacheName !== STATIC_CACHE,
+            )
             .map((cacheName) => caches.delete(cacheName)),
         ),
       )
@@ -37,28 +41,25 @@ self.addEventListener("fetch", (event) => {
   }
 
   event.respondWith(
-    caches.match(event.request).then((cachedResponse) => {
-      if (cachedResponse) {
-        return cachedResponse;
-      }
-
-      return fetch(event.request).then((networkResponse) => {
-        if (
-          !networkResponse ||
-          networkResponse.status !== 200 ||
-          networkResponse.type !== "basic"
-        ) {
+    caches.open(STATIC_CACHE).then((cache) =>
+      cache.match(event.request).then((cachedResponse) => {
+        const networkFetch = fetch(event.request).then((networkResponse) => {
+          if (
+            networkResponse &&
+            networkResponse.status === 200 &&
+            networkResponse.type === "basic"
+          ) {
+            cache.put(event.request, networkResponse.clone());
+          }
           return networkResponse;
-        }
+        });
 
-        const cachedNetworkResponse = networkResponse.clone();
-        event.waitUntil(
-          caches.open(STATIC_CACHE).then((cache) => {
-            cache.put(event.request, cachedNetworkResponse);
-          }),
-        );
-        return networkResponse;
-      });
-    }),
+        if (cachedResponse) {
+          event.waitUntil(networkFetch);
+          return cachedResponse;
+        }
+        return networkFetch;
+      }),
+    ),
   );
 });
