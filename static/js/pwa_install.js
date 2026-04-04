@@ -23,21 +23,38 @@ const setHidden = (element, isHidden) => {
 const showInstallPrompt = (controls) => {
   const installButton = controls.querySelector("[data-pwa-install-button]");
   const promptCopy = controls.querySelector("[data-pwa-install-prompt]");
+  const dismissedCopy = controls.querySelector("[data-pwa-install-dismissed]");
   const iosCopy = controls.querySelector("[data-pwa-install-ios]");
 
   controls.hidden = false;
   setHidden(promptCopy, false);
+  setHidden(dismissedCopy, true);
   setHidden(iosCopy, true);
   setHidden(installButton, false);
+};
+
+const showDismissedHint = (controls) => {
+  const installButton = controls.querySelector("[data-pwa-install-button]");
+  const promptCopy = controls.querySelector("[data-pwa-install-prompt]");
+  const dismissedCopy = controls.querySelector("[data-pwa-install-dismissed]");
+  const iosCopy = controls.querySelector("[data-pwa-install-ios]");
+
+  controls.hidden = false;
+  setHidden(promptCopy, true);
+  setHidden(dismissedCopy, false);
+  setHidden(iosCopy, true);
+  setHidden(installButton, true);
 };
 
 const showIosHint = (controls) => {
   const installButton = controls.querySelector("[data-pwa-install-button]");
   const promptCopy = controls.querySelector("[data-pwa-install-prompt]");
+  const dismissedCopy = controls.querySelector("[data-pwa-install-dismissed]");
   const iosCopy = controls.querySelector("[data-pwa-install-ios]");
 
   controls.hidden = false;
   setHidden(promptCopy, true);
+  setHidden(dismissedCopy, true);
   setHidden(iosCopy, false);
   setHidden(installButton, true);
 };
@@ -45,10 +62,12 @@ const showIosHint = (controls) => {
 const hideInstallControls = (controls) => {
   const installButton = controls.querySelector("[data-pwa-install-button]");
   const promptCopy = controls.querySelector("[data-pwa-install-prompt]");
+  const dismissedCopy = controls.querySelector("[data-pwa-install-dismissed]");
   const iosCopy = controls.querySelector("[data-pwa-install-ios]");
 
   controls.hidden = true;
   setHidden(promptCopy, true);
+  setHidden(dismissedCopy, true);
   setHidden(iosCopy, true);
   setHidden(installButton, true);
 };
@@ -116,12 +135,22 @@ document.addEventListener("DOMContentLoaded", () => {
         return;
       }
 
+      const installPrompt = deferredInstallPrompt;
       installButton.disabled = true;
-      deferredInstallPrompt.prompt();
-      await deferredInstallPrompt.userChoice;
-      deferredInstallPrompt = null;
-      installButton.disabled = false;
-      hideInstallControls(controls);
+      try {
+        await installPrompt.prompt();
+        const { outcome } = await installPrompt.userChoice;
+        deferredInstallPrompt = null;
+
+        if (outcome === "accepted") {
+          hideInstallControls(controls);
+          return;
+        }
+
+        showDismissedHint(controls);
+      } finally {
+        installButton.disabled = false;
+      }
     });
   }
 

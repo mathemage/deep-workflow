@@ -68,6 +68,7 @@ def test_home_renders_install_controls_markup(client, user) -> None:
     assert response.status_code == 200
     assertContains(response, "data-pwa-install-controls")
     assertContains(response, "data-pwa-install-button")
+    assertContains(response, "data-pwa-install-dismissed")
     assertContains(response, "Install app")
 
 

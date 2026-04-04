@@ -41,4 +41,4 @@ def test_service_worker_route_returns_javascript(client) -> None:
     assertContains(response, "/static/css/app.css")
     assertContains(response, "/static/js/pwa_install.js")
     assertContains(response, 'CACHE_PREFIX = "deep-workflow-"')
-    assertContains(response, "event.waitUntil(networkFetch)")
+    assertContains(response, "event.waitUntil(networkFetch.catch(() => undefined))")

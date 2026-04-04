@@ -55,7 +55,7 @@ self.addEventListener("fetch", (event) => {
         });
 
         if (cachedResponse) {
-          event.waitUntil(networkFetch);
+          event.waitUntil(networkFetch.catch(() => undefined));
           return cachedResponse;
         }
         return networkFetch;
