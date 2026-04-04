@@ -60,6 +60,18 @@ def test_home_renders_daily_sheet_for_today(client, user) -> None:
     assertContains(response, "completed today")
 
 
+def test_home_renders_install_controls_markup(client, user) -> None:
+    client.force_login(user)
+
+    response = client.get(reverse("home"))
+
+    assert response.status_code == 200
+    assertContains(response, "data-pwa-install-controls")
+    assertContains(response, "data-pwa-install-button")
+    assertContains(response, "data-pwa-install-dismissed")
+    assertContains(response, "Install app")
+
+
 def test_home_uses_user_timezone_to_pick_todays_sheet(client, user) -> None:
     UserPreferences.objects.create(user=user, timezone="America/Los_Angeles")
     client.force_login(user)

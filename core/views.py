@@ -1,3 +1,4 @@
+import json
 from collections import Counter
 from datetime import date, datetime, timedelta
 
@@ -9,6 +10,7 @@ from django.db import transaction
 from django.db.models import Count, Q
 from django.http import Http404, HttpRequest, HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
+from django.templatetags.static import static
 from django.urls import reverse
 from django.utils import timezone
 from django.views.decorators.http import require_POST
@@ -35,6 +37,8 @@ SESSION_TIMER_SUCCESS_MESSAGES = {
     "skip": "marked skipped.",
     "mark_planned": "moved back to planned.",
 }
+PWA_THEME_COLOR = "#0f172a"
+PWA_BACKGROUND_COLOR = "#f8fafc"
 
 
 class DeepWorkflowLoginView(LoginView):
@@ -472,3 +476,61 @@ def preferences(request: HttpRequest) -> HttpResponse:
 
 def health(request: HttpRequest) -> JsonResponse:
     return JsonResponse({"status": "ok"})
+
+
+def manifest(request: HttpRequest) -> JsonResponse:
+    return JsonResponse(
+        {
+            "name": "deep-workflow",
+            "short_name": "deep-work",
+            "description": (
+                "Plan three personal deep-work sessions and one admin block each day."
+            ),
+            "start_url": reverse("home"),
+            "scope": "/",
+            "display": "standalone",
+            "background_color": PWA_BACKGROUND_COLOR,
+            "theme_color": PWA_THEME_COLOR,
+            "icons": [
+                {
+                    "src": static("icons/icon-192.png"),
+                    "sizes": "192x192",
+                    "type": "image/png",
+                },
+                {
+                    "src": static("icons/icon-512.png"),
+                    "sizes": "512x512",
+                    "type": "image/png",
+                },
+                {
+                    "src": static("icons/icon-512.png"),
+                    "sizes": "512x512",
+                    "type": "image/png",
+                    "purpose": "maskable",
+                },
+            ],
+        },
+        content_type="application/manifest+json",
+    )
+
+
+def service_worker(request: HttpRequest) -> HttpResponse:
+    response = render(
+        request,
+        "service-worker.js",
+        {
+            "asset_urls_json": json.dumps(
+                [
+                    static("css/app.css"),
+                    static("js/pwa_install.js"),
+                    static("js/session_timer.js"),
+                    static("icons/apple-touch-icon.png"),
+                    static("icons/icon-192.png"),
+                    static("icons/icon-512.png"),
+                ]
+            ),
+        },
+        content_type="application/javascript",
+    )
+    response["Cache-Control"] = "no-cache"
+    return response

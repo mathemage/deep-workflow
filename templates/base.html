@@ -3,11 +3,24 @@
 <html lang="en">
   <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta
+      name="description"
+      content="Plan and complete focused 45-minute work sessions that stay in sync across devices."
+    >
+    <meta name="theme-color" content="#0f172a">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="deep-workflow">
     <title>{% block title %}deep-workflow{% endblock title %}</title>
+    <link rel="manifest" href="{% url 'manifest' %}">
+    <link rel="icon" href="{% static 'icons/icon-192.png' %}" sizes="192x192" type="image/png">
+    <link rel="apple-touch-icon" href="{% static 'icons/apple-touch-icon.png' %}">
     <link rel="stylesheet" href="{% static 'css/app.css' %}">
   </head>
   <body>
+    <a class="skip-link" href="#main-content">Skip to content</a>
     <header class="site-header">
       <div class="header-inner">
         <a class="brand" href="{% if request.user.is_authenticated %}{% url 'home' %}{% else %}{% url 'login' %}{% endif %}">
@@ -27,7 +40,7 @@
         </nav>
       </div>
     </header>
-    <main class="site-main">
+    <main class="site-main" id="main-content">
       {% if messages %}
         <div class="stack">
           {% for message in messages %}
@@ -39,6 +52,7 @@
         {% endif %}
       {% block content %}{% endblock content %}
     </main>
+    <script src="{% static 'js/pwa_install.js' %}" defer></script>
     {% block extra_scripts %}{% endblock extra_scripts %}
   </body>
 </html>
