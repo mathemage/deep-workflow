@@ -6,7 +6,9 @@ from .views import (
     DeepWorkflowLoginView,
     health,
     home,
+    manifest,
     preferences,
+    service_worker,
     update_session_timer,
 )
 
@@ -14,6 +16,8 @@ urlpatterns = [
     path("login/", DeepWorkflowLoginView.as_view(), name="login"),
     path("logout/", LogoutView.as_view(), name="logout"),
     path("settings/", preferences, name="preferences"),
+    path("manifest.webmanifest", manifest, name="manifest"),
+    path("service-worker.js", service_worker, name="service-worker"),
     path(
         "sessions/<int:session_id>/timer/",
         update_session_timer,

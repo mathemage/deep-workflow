@@ -26,6 +26,7 @@ def test_login_page_renders(client) -> None:
     assert response.status_code == 200
     assertTemplateUsed(response, "registration/login.html")
     assertContains(response, "Log in")
+    assertContains(response, 'rel="manifest"')
 
 
 def test_login_redirects_to_dashboard_and_creates_default_preferences(

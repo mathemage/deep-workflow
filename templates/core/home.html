@@ -12,17 +12,33 @@
           <h1>{% if is_today %}Today{% else %}{{ selected_date|date:"l, F j" }}{% endif %}</h1>
           <p class="sheet-date">{{ selected_date|date:"l, F j, Y" }}</p>
         </div>
-        <nav class="sheet-nav" aria-label="Day navigation">
-          <a class="button button-secondary" href="{% url 'home' %}?date={{ previous_date|date:'Y-m-d' }}">
-            Previous day
-          </a>
-          {% if not is_today %}
-            <a class="button button-secondary" href="{% url 'home' %}">Today</a>
-          {% endif %}
-          <a class="button button-secondary" href="{% url 'home' %}?date={{ next_date|date:'Y-m-d' }}">
-            Next day
-          </a>
-        </nav>
+        <div class="sheet-header-actions">
+          <nav class="sheet-nav" aria-label="Day navigation">
+            <a class="button button-secondary" href="{% url 'home' %}?date={{ previous_date|date:'Y-m-d' }}">
+              Previous day
+            </a>
+            {% if not is_today %}
+              <a class="button button-secondary" href="{% url 'home' %}">Today</a>
+            {% endif %}
+            <a class="button button-secondary" href="{% url 'home' %}?date={{ next_date|date:'Y-m-d' }}">
+              Next day
+            </a>
+          </nav>
+          <div class="install-card" data-pwa-install-controls hidden>
+            <div>
+              <span class="eyebrow">Install</span>
+              <p class="install-copy" data-pwa-install-prompt hidden>
+                Keep today's sheet one tap away.
+              </p>
+              <p class="install-copy" data-pwa-install-ios hidden>
+                In Safari, use Share and choose Add to Home Screen.
+              </p>
+            </div>
+            <button type="button" class="button button-secondary" data-pwa-install-button hidden>
+              Install app
+            </button>
+          </div>
+        </div>
       </div>
       <p class="muted">
         Plan three personal sessions and one admin block, then run the
@@ -40,7 +56,7 @@
       </dl>
     </div>
 
-    <div class="summary-grid">
+    <div class="summary-grid" aria-label="Progress overview">
       <section class="card summary-card" aria-labelledby="daily-summary-title">
         <div class="summary-card-top">
           <div>
@@ -185,7 +201,7 @@
               <section class="session-section">
                 <h3>Goal</h3>
                 {% if session.goal %}
-                  <p>{{ session.goal }}</p>
+                  <p class="text-block">{{ session.goal }}</p>
                 {% else %}
                   <p class="empty-copy">Add a finishable outcome for this block.</p>
                 {% endif %}
@@ -202,7 +218,14 @@
             </div>
 
             <details class="session-editor"{% if form.errors %} open{% endif %}>
-              <summary>{% if session.goal or session.notes %}Edit session{% else %}Plan session{% endif %}</summary>
+              <summary>
+                <span>
+                  <span class="session-editor-title">
+                    {% if session.goal or session.notes %}Edit session{% else %}Plan session{% endif %}
+                  </span>
+                  <span class="session-editor-hint">Update the goal and notes for this block.</span>
+                </span>
+              </summary>
               <form method="post" action="{% url 'home' %}?date={{ selected_date|date:'Y-m-d' }}" class="stack-large">
                 {% csrf_token %}
                 <input type="hidden" name="session_id" value="{{ session.pk }}">

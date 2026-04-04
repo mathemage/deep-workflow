@@ -26,7 +26,7 @@ The first version should focus on a clean, dependable foundation:
 - session goals, notes, and completion state
 - a 45-minute session timer whose start time and state are stored on the server so it survives refreshes and device switching
 - daily and weekly progress summaries
-- a responsive web experience first, with PWA polish later
+- a responsive web experience that works well on phones and laptops, with installable PWA basics
 
 ## Non-goals
 
@@ -84,7 +84,7 @@ The implementation should land in small, reviewable PRs:
 
 ## Current foundation
 
-This repository now includes the foundation plus roadmap slices 1 through 7:
+This repository now includes the foundation plus roadmap slices 1 through 8:
 
 - Django project and `core` app wiring
 - environment-based settings with `DATABASE_URL` support for PostgreSQL
@@ -95,9 +95,11 @@ This repository now includes the foundation plus roadmap slices 1 through 7:
 - a server-backed session timer with start, pause, resume, and complete actions plus remaining-time feedback
 - auto-generated daily sheets that keep the fixed 3 personal + 1 admin structure intact
 - daily and weekly progress summaries with simple streak and completion indicators
+- mobile-first layout polish for the daily sheet, navigation, and touch targets
+- a manifest, service worker, and installable PWA shell
 - Ruff linting/formatting, pytest-based tests, and GitHub Actions CI
 
-The follow-up roadmap items still apply; this foundation now includes progress summaries and intentionally stops short of mobile/PWA polish and deployment work.
+The follow-up roadmap item for deployment still applies; this foundation now includes mobile/PWA polish and still stops short of deployment work.
 
 ## Local development
 
@@ -118,7 +120,7 @@ python manage.py createsuperuser
 python manage.py runserver
 ```
 
-The app will be available at `http://127.0.0.1:8000/`. Sign in at `http://127.0.0.1:8000/login/`, then use the daily sheet to plan, update, and run the four session cards with the synced timer. The settings page still lets you choose your timezone and default session duration. The health endpoint remains available at `http://127.0.0.1:8000/health/`.
+The app will be available at `http://127.0.0.1:8000/`. Sign in at `http://127.0.0.1:8000/login/`, then use the daily sheet to plan, update, and run the four session cards with the synced timer. On supported browsers, the app also exposes an install prompt backed by `http://127.0.0.1:8000/manifest.webmanifest` and `http://127.0.0.1:8000/service-worker.js`. The settings page still lets you choose your timezone and default session duration. The health endpoint remains available at `http://127.0.0.1:8000/health/`.
 
 ### PostgreSQL configuration
 
