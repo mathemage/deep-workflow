@@ -84,7 +84,7 @@ The implementation should land in small, reviewable PRs:
 
 ## Current foundation
 
-This repository now includes the foundation plus roadmap slices 1 through 8:
+This repository now includes the foundation plus roadmap slices 1 through 9:
 
 - Django project and `core` app wiring
 - environment-based settings with `DATABASE_URL` support for PostgreSQL
@@ -97,9 +97,9 @@ This repository now includes the foundation plus roadmap slices 1 through 8:
 - daily and weekly progress summaries with simple streak and completion indicators
 - mobile-first layout polish for the daily sheet, navigation, and touch targets
 - a manifest, service worker, and installable PWA shell
+- production-hardened hosted settings, Vercel deployment config, readiness endpoints, and request-ID-aware logging
+- PostgreSQL backup and restore documentation for hosted operations
 - Ruff linting/formatting, pytest-based tests, and GitHub Actions CI
-
-The follow-up roadmap item for deployment still applies; this foundation now includes mobile/PWA polish and still stops short of deployment work.
 
 ## Local development
 
@@ -120,7 +120,7 @@ python manage.py createsuperuser
 python manage.py runserver
 ```
 
-The app will be available at `http://127.0.0.1:8000/`. Sign in at `http://127.0.0.1:8000/login/`, then use the daily sheet to plan, update, and run the four session cards with the synced timer. On supported browsers, the app also exposes an install prompt backed by `http://127.0.0.1:8000/manifest.webmanifest` and `http://127.0.0.1:8000/service-worker.js`. The settings page still lets you choose your timezone and default session duration. The health endpoint remains available at `http://127.0.0.1:8000/health/`.
+The app will be available at `http://127.0.0.1:8000/`. Sign in at `http://127.0.0.1:8000/login/`, then use the daily sheet to plan, update, and run the four session cards with the synced timer. On supported browsers, the app also exposes an install prompt backed by `http://127.0.0.1:8000/manifest.webmanifest` and `http://127.0.0.1:8000/service-worker.js`. The settings page still lets you choose your timezone and default session duration. Health endpoints remain available at `http://127.0.0.1:8000/health/`, `http://127.0.0.1:8000/health/live/`, and `http://127.0.0.1:8000/health/ready/`.
 
 ### PostgreSQL configuration
 
@@ -136,6 +136,86 @@ DATABASE_URL=postgresql://postgres:postgres@127.0.0.1:5432/deep_workflow
 
 If `DATABASE_URL` is omitted, Django falls back to SQLite for the quickest local bootstrap.
 
+## Vercel deployment
+
+The repository now includes the files needed to host the app on Vercel production and PR preview environments:
+
+- `wsgi.py` exposes the Django WSGI app through Vercel's Python runtime
+- `vercel.json` pins the Python function runtime and build command
+- `scripts/vercel-build.sh` always runs `collectstatic` and only runs migrations when `VERCEL_RUN_MIGRATIONS=1`
+- hosted settings derive trusted hosts and CSRF origins from `APP_BASE_URL` plus Vercel's runtime URLs, then enable HTTPS redirects, secure cookies, conservative HSTS defaults, WhiteNoise static serving, and request-ID-aware logging
+
+### Required environment variables
+
+| Variable | Production | Preview | Notes |
+| --- | --- | --- | --- |
+| `DJANGO_SECRET_KEY` | Required | Required | Use a unique secret per environment. |
+| `DATABASE_URL` | Required | Required | Point previews at an isolated PostgreSQL database or branch database, not production. |
+| `APP_BASE_URL` | `https://deep-workflow.vercel.app` | Optional | Sets the canonical production URL and anchors the production host/origin configuration. |
+| `DJANGO_SECURE_HSTS_PRELOAD` | Optional | Optional | Leave unset unless you intentionally want preload and already satisfy the preload requirements (`includeSubDomains` plus at least `31536000` seconds). |
+| `VERCEL_RUN_MIGRATIONS` | Set to `1` only for deliberate schema rollouts | Set to `1` only for isolated preview databases | Build-time migrations are always opt-in. |
+
+Vercel injects `VERCEL_ENV`, `VERCEL_URL`, `VERCEL_BRANCH_URL`, and `VERCEL_PROJECT_PRODUCTION_URL` automatically. The app uses those values to allow the current production deployment and each preview deployment without widening `ALLOWED_HOSTS` to every `*.vercel.app` hostname.
+
+### Production and preview workflow
+
+1. Connect the repository to Vercel and keep `main` as the production branch.
+2. Set `APP_BASE_URL=https://deep-workflow.vercel.app` in the Production environment.
+3. Set `DJANGO_SECRET_KEY` and `DATABASE_URL` in both Production and Preview. Use a separate preview database if you want preview deployments to run migrations.
+4. Let pushes to non-`main` branches create Preview deployments automatically. Leave `VERCEL_RUN_MIGRATIONS` unset for normal deploys; only turn it on for isolated preview databases or a coordinated production schema rollout, then redeploy intentionally.
+5. After each deployment, check `GET /health/ready/` for database readiness and `GET /health/live/` for the lightweight liveness probe.
+
+### Health checks and monitoring hooks
+
+- `GET /health/live/` is a cheap liveness probe that does not touch the database.
+- `GET /health/ready/` checks database connectivity and returns HTTP `503` when the database is unavailable.
+- `GET /health/` remains a readiness alias for simple uptime integrations.
+- Health responses include the deployment environment and, when Vercel provides them, the deployment URL and git SHA.
+- Responses include an `X-Request-ID` response header, and the default log format writes `request_id=... env=...` to stdout so Vercel logs and log drains can correlate failures quickly.
+
+## PostgreSQL backup and restore
+
+Take backups outside Vercel with PostgreSQL client tools and store them in durable storage that is separate from the app deployment.
+
+Create a compressed backup:
+
+```bash
+mkdir -p backups
+pg_dump \
+  --format=custom \
+  --no-owner \
+  --no-privileges \
+  --file "backups/deep_workflow_$(date +%F_%H%M%S).dump" \
+  "$DATABASE_URL"
+```
+
+Verify a backup by restoring it into a disposable database first:
+
+```bash
+createdb deep_workflow_restore_check
+pg_restore \
+  --clean \
+  --if-exists \
+  --no-owner \
+  --no-privileges \
+  --dbname=deep_workflow_restore_check \
+  backups/deep_workflow_2026-04-05_180000.dump
+```
+
+Restore into a replacement hosted database before cutting production over:
+
+```bash
+pg_restore \
+  --clean \
+  --if-exists \
+  --no-owner \
+  --no-privileges \
+  --dbname="$RESTORE_DATABASE_URL" \
+  backups/deep_workflow_2026-04-05_180000.dump
+```
+
+Prefer restoring into a fresh database, smoke-test the app with `/health/ready/`, and only then swap the production `DATABASE_URL`. That keeps rollback simple and avoids destructive restore work against the live database.
+
 ## Quality checks
 
 Run the foundational checks before opening a change:
@@ -148,4 +228,14 @@ python manage.py check
 pytest
 ```
 
-CI runs the same lint and test commands against PostgreSQL on every push and pull request.
+For a production-leaning settings smoke test, also run:
+
+```bash
+. .venv/bin/activate
+APP_BASE_URL=https://deep-workflow.vercel.app \
+DJANGO_DEBUG=False \
+DJANGO_SECRET_KEY=local-deploy-check-only-1234567890-abcdefghijklmnopqrstuvwxyz \
+python manage.py check --deploy
+```
+
+CI runs the same lint and test commands against PostgreSQL on every push and pull request, and it now also runs `python manage.py check --deploy`.

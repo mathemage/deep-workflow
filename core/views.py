@@ -16,6 +16,7 @@ from django.utils import timezone
 from django.views.decorators.http import require_POST
 
 from .forms import UserPreferencesForm, WorkSessionUpdateForm
+from .health import liveness_payload, readiness_payload
 from .models import DailySheet, UserPreferences, WorkSession
 
 SESSION_TIMER_ACTIONS = {
@@ -475,7 +476,17 @@ def preferences(request: HttpRequest) -> HttpResponse:
 
 
 def health(request: HttpRequest) -> JsonResponse:
-    return JsonResponse({"status": "ok"})
+    payload, status_code = readiness_payload()
+    return JsonResponse(payload, status=status_code)
+
+
+def health_live(request: HttpRequest) -> JsonResponse:
+    return JsonResponse(liveness_payload())
+
+
+def health_ready(request: HttpRequest) -> JsonResponse:
+    payload, status_code = readiness_payload()
+    return JsonResponse(payload, status=status_code)
 
 
 def manifest(request: HttpRequest) -> JsonResponse:
