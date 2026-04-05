@@ -105,7 +105,7 @@ This repository now includes the foundation plus roadmap slices 1 through 9:
 
 Prerequisites:
 
-- Python 3.12+
+- Python 3.12.x
 - PostgreSQL 16+ if you want local PostgreSQL instead of the default SQLite fallback
 
 Bootstrap the project:
@@ -141,7 +141,8 @@ If `DATABASE_URL` is omitted, Django falls back to SQLite for the quickest local
 The repository now includes the files needed to host the app on Vercel production and PR preview environments:
 
 - `wsgi.py` exposes the Django WSGI app through Vercel's Python runtime
-- `vercel.json` pins the Python function runtime and build command
+- `.python-version` pins Vercel to Python 3.12, matching the project's supported local Python 3.12.x runtime
+- `vercel.json` sets the Vercel build command and rewrites
 - `scripts/vercel-build.sh` always runs `collectstatic` and only runs migrations when `VERCEL_RUN_MIGRATIONS=1`
 - hosted settings derive trusted hosts and CSRF origins from `APP_BASE_URL` plus Vercel's runtime URLs, then enable HTTPS redirects, secure cookies, conservative HSTS defaults, WhiteNoise static serving, and request-ID-aware logging
 
@@ -149,11 +150,26 @@ The repository now includes the files needed to host the app on Vercel productio
 
 | Variable | Production | Preview | Notes |
 | --- | --- | --- | --- |
-| `DJANGO_SECRET_KEY` | Required | Required | Use a unique secret per environment. |
+| `DJANGO_SECRET_KEY` | Required | Required | Use a unique secret per environment. Hosted builds fail fast until this is set. |
 | `DATABASE_URL` | Required | Required | Point previews at an isolated PostgreSQL database or branch database, not production. |
 | `APP_BASE_URL` | `https://deep-workflow.vercel.app` | Optional | Sets the canonical production URL and anchors the production host/origin configuration. |
 | `DJANGO_SECURE_HSTS_PRELOAD` | Optional | Optional | Leave unset unless you intentionally want preload and already satisfy the preload requirements (`includeSubDomains` plus at least `31536000` seconds). |
 | `VERCEL_RUN_MIGRATIONS` | Set to `1` only for deliberate schema rollouts | Set to `1` only for isolated preview databases | Build-time migrations are always opt-in. |
+
+#### Generate and add `DJANGO_SECRET_KEY`
+
+1. Generate a secret locally:
+
+   ```bash
+   . .venv/bin/activate
+   python -c "from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())"
+   ```
+
+2. Copy the printed value. Do not commit it or save it in the repository.
+3. In Vercel, open the `deep-workflow` project, then go to **Settings** -> **Environment Variables**.
+4. Create `DJANGO_SECRET_KEY` for the **Preview** environment and paste the copied value.
+5. Generate a second secret the same way and create `DJANGO_SECRET_KEY` for the **Production** environment.
+6. Save the variables and redeploy if a build already failed because the secret was missing.
 
 Vercel injects `VERCEL_ENV`, `VERCEL_URL`, `VERCEL_BRANCH_URL`, and `VERCEL_PROJECT_PRODUCTION_URL` automatically. The app uses those values to allow the current production deployment and each preview deployment without widening `ALLOWED_HOSTS` to every `*.vercel.app` hostname.
 
