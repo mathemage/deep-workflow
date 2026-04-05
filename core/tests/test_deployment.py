@@ -2,6 +2,7 @@ from deep_workflow.deployment import (
     build_allowed_hosts,
     build_csrf_trusted_origins,
     canonical_deployment_url,
+    default_debug,
     deployment_environment,
     hosted_environment,
 )
@@ -63,3 +64,9 @@ def test_canonical_deployment_url_prefers_preview_url_for_preview_env() -> None:
         canonical_deployment_url(environ)
         == "https://deep-workflow-git-production-deploy-mathemage.vercel.app"
     )
+
+
+def test_default_debug_uses_loaded_vercel_flags() -> None:
+    assert default_debug({}) is True
+    assert default_debug({"VERCEL_ENV": "production"}) is False
+    assert default_debug({"VERCEL": "true"}) is False

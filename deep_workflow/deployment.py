@@ -10,6 +10,13 @@ DEPLOYMENT_URL_KEYS = (
 DEPLOYMENT_ENVIRONMENTS = {"preview", "production", "development"}
 
 
+def default_debug(environ: Mapping[str, str]) -> bool:
+    return environ.get("VERCEL_ENV", "").strip().lower() not in {
+        "preview",
+        "production",
+    } and environ.get("VERCEL", "").strip().lower() not in {"1", "true"}
+
+
 def deployment_environment(environ: Mapping[str, str]) -> str:
     vercel_environment = environ.get("VERCEL_ENV", "").strip().lower()
     if vercel_environment in DEPLOYMENT_ENVIRONMENTS:

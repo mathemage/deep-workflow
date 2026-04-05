@@ -10,6 +10,7 @@ from .deployment import (
     build_allowed_hosts,
     build_csrf_trusted_origins,
     canonical_deployment_url,
+    default_debug,
     deployment_environment,
     deployment_git_sha,
     hosted_environment,
@@ -17,10 +18,8 @@ from .deployment import (
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
-DEFAULT_DEBUG = os.environ.get("VERCEL_ENV", "").strip().lower() not in {
-    "preview",
-    "production",
-} and os.environ.get("VERCEL", "").strip().lower() not in {"1", "true"}
+environ.Env.read_env(BASE_DIR / ".env")
+DEFAULT_DEBUG = default_debug(os.environ)
 
 env = environ.Env(
     APP_BASE_URL=(str, ""),
@@ -46,7 +45,6 @@ env = environ.Env(
     DJANGO_X_FRAME_OPTIONS=(str, "DENY"),
     TIME_ZONE=(str, "UTC"),
 )
-environ.Env.read_env(BASE_DIR / ".env")
 
 DEBUG = env("DJANGO_DEBUG")
 DEPLOYMENT_ENV = deployment_environment(os.environ)
