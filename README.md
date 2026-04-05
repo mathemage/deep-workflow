@@ -156,6 +156,21 @@ The repository now includes the files needed to host the app on Vercel productio
 | `DJANGO_SECURE_HSTS_PRELOAD` | Optional | Optional | Leave unset unless you intentionally want preload and already satisfy the preload requirements (`includeSubDomains` plus at least `31536000` seconds). |
 | `VERCEL_RUN_MIGRATIONS` | Set to `1` only for deliberate schema rollouts | Set to `1` only for isolated preview databases | Build-time migrations are always opt-in. |
 
+#### Generate and add `DJANGO_SECRET_KEY`
+
+1. Generate a secret locally:
+
+   ```bash
+   . .venv/bin/activate
+   python -c "from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())"
+   ```
+
+2. Copy the printed value. Do not commit it or save it in the repository.
+3. In Vercel, open the `deep-workflow` project, then go to **Settings** -> **Environment Variables**.
+4. Create `DJANGO_SECRET_KEY` for the **Preview** environment and paste the copied value.
+5. Generate a second secret the same way and create `DJANGO_SECRET_KEY` for the **Production** environment.
+6. Save the variables and redeploy if a build already failed because the secret was missing.
+
 Vercel injects `VERCEL_ENV`, `VERCEL_URL`, `VERCEL_BRANCH_URL`, and `VERCEL_PROJECT_PRODUCTION_URL` automatically. The app uses those values to allow the current production deployment and each preview deployment without widening `ALLOWED_HOSTS` to every `*.vercel.app` hostname.
 
 ### Production and preview workflow
