@@ -1,0 +1,65 @@
+from deep_workflow.deployment import (
+    build_allowed_hosts,
+    build_csrf_trusted_origins,
+    canonical_deployment_url,
+    deployment_environment,
+    hosted_environment,
+)
+
+
+def test_build_allowed_hosts_adds_vercel_runtime_hosts() -> None:
+    environ = {
+        "APP_BASE_URL": "https://deep-workflow.vercel.app",
+        "VERCEL_BRANCH_URL": "deep-workflow-git-production-deploy-mathemage.vercel.app",
+        "VERCEL_URL": "deep-workflow-9vxtqhmvi-mathemage.vercel.app",
+    }
+
+    assert build_allowed_hosts(["localhost", "127.0.0.1", "testserver"], environ) == [
+        "localhost",
+        "127.0.0.1",
+        "testserver",
+        "deep-workflow.vercel.app",
+        "deep-workflow-git-production-deploy-mathemage.vercel.app",
+        "deep-workflow-9vxtqhmvi-mathemage.vercel.app",
+    ]
+
+
+def test_build_csrf_trusted_origins_adds_https_runtime_origins() -> None:
+    environ = {
+        "APP_BASE_URL": "https://deep-workflow.vercel.app",
+        "VERCEL_URL": "deep-workflow-9vxtqhmvi-mathemage.vercel.app",
+    }
+
+    assert build_csrf_trusted_origins(
+        ["http://localhost:8000", "http://127.0.0.1:8000"],
+        environ,
+    ) == [
+        "http://localhost:8000",
+        "http://127.0.0.1:8000",
+        "https://deep-workflow.vercel.app",
+        "https://deep-workflow-9vxtqhmvi-mathemage.vercel.app",
+    ]
+
+
+def test_deployment_environment_helpers_detect_hosted_runtime() -> None:
+    environ = {
+        "VERCEL_ENV": "preview",
+        "VERCEL_PROJECT_PRODUCTION_URL": "deep-workflow.vercel.app",
+    }
+
+    assert deployment_environment(environ) == "preview"
+    assert hosted_environment(environ) is True
+    assert canonical_deployment_url(environ) == "https://deep-workflow.vercel.app"
+
+
+def test_canonical_deployment_url_prefers_preview_url_for_preview_env() -> None:
+    environ = {
+        "APP_BASE_URL": "https://deep-workflow.vercel.app",
+        "VERCEL_BRANCH_URL": "deep-workflow-git-production-deploy-mathemage.vercel.app",
+        "VERCEL_ENV": "preview",
+    }
+
+    assert (
+        canonical_deployment_url(environ)
+        == "https://deep-workflow-git-production-deploy-mathemage.vercel.app"
+    )

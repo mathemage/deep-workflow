@@ -5,6 +5,8 @@ from django.views.generic import RedirectView
 from .views import (
     DeepWorkflowLoginView,
     health,
+    health_live,
+    health_ready,
     home,
     manifest,
     preferences,
@@ -16,6 +18,9 @@ urlpatterns = [
     path("login/", DeepWorkflowLoginView.as_view(), name="login"),
     path("logout/", LogoutView.as_view(), name="logout"),
     path("settings/", preferences, name="preferences"),
+    path("health/", health, name="health"),
+    path("health/live/", health_live, name="health-live"),
+    path("health/ready/", health_ready, name="health-ready"),
     path("manifest.webmanifest", manifest, name="manifest"),
     path("service-worker.js", service_worker, name="service-worker"),
     path(
@@ -24,7 +29,6 @@ urlpatterns = [
         name="session-timer",
     ),
     path("", home, name="home"),
-    path("health/", health, name="health"),
     path(
         "accounts/login/",
         RedirectView.as_view(pattern_name="login", permanent=False, query_string=True),

@@ -35,7 +35,7 @@ jobs:
       DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/deep_workflow
       DJANGO_ALLOWED_HOSTS: localhost,127.0.0.1,testserver
       DJANGO_DEBUG: "False"
-      DJANGO_SECRET_KEY: ci-secret-key
+      DJANGO_SECRET_KEY: ci-secret-key-not-for-production-use-only-1234567890
 
     steps:
       - name: Check out code
@@ -60,6 +60,7 @@ jobs:
         run: |
           python manage.py migrate --noinput
           python manage.py check
+          python manage.py check --deploy
 
       - name: Test
         run: pytest

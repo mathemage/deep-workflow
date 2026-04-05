@@ -1,0 +1,10 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "buildCommand": "./scripts/vercel-build.sh",
+  "functions": {
+    "wsgi.py": {
+      "runtime": "python3.12",
+      "excludeFiles": "{.venv/**,__pycache__/**,.pytest_cache/**,.ruff_cache/**,core/tests/**,db.sqlite3}"
+    }
+  }
+}
