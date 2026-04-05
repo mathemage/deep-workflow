@@ -92,8 +92,10 @@ def test_home_uses_user_timezone_to_pick_todays_sheet(client, user) -> None:
 def test_home_loads_selected_day_and_navigation(client, user) -> None:
     client.force_login(user)
     selected_date = date(2026, 4, 5)
+    current_time = datetime(2026, 4, 6, 12, 0, tzinfo=dt_timezone.utc)
 
-    response = client.get(reverse("home"), {"date": selected_date.isoformat()})
+    with patch("core.views.timezone.now", return_value=current_time):
+        response = client.get(reverse("home"), {"date": selected_date.isoformat()})
 
     assert response.status_code == 200
     assert response.context["selected_date"] == selected_date
