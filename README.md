@@ -141,7 +141,8 @@ If `DATABASE_URL` is omitted, Django falls back to SQLite for the quickest local
 The repository now includes the files needed to host the app on Vercel production and PR preview environments:
 
 - `wsgi.py` exposes the Django WSGI app through Vercel's Python runtime
-- `vercel.json` pins the Python function runtime and build command
+- `.python-version` pins the Python runtime that Vercel should use
+- `vercel.json` sets the Vercel build command and rewrites
 - `scripts/vercel-build.sh` always runs `collectstatic` and only runs migrations when `VERCEL_RUN_MIGRATIONS=1`
 - hosted settings derive trusted hosts and CSRF origins from `APP_BASE_URL` plus Vercel's runtime URLs, then enable HTTPS redirects, secure cookies, conservative HSTS defaults, WhiteNoise static serving, and request-ID-aware logging
 
