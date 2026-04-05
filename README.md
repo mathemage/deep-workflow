@@ -152,7 +152,7 @@ The repository now includes the files needed to host the app on Vercel productio
 | `DJANGO_SECRET_KEY` | Required | Required | Use a unique secret per environment. |
 | `DATABASE_URL` | Required | Required | Point previews at an isolated PostgreSQL database or branch database, not production. |
 | `APP_BASE_URL` | `https://deep-workflow.vercel.app` | Optional | Sets the canonical production URL and anchors the production host/origin configuration. |
-| `VERCEL_RUN_MIGRATIONS` | Optional | Set to `1` only when the preview database is isolated | Production migrations run automatically; preview migrations stay opt-in. |
+| `VERCEL_RUN_MIGRATIONS` | Optional | Set to `1` only for isolated preview databases | Production migrations run automatically; preview migrations stay opt-in. |
 
 Vercel injects `VERCEL_ENV`, `VERCEL_URL`, `VERCEL_BRANCH_URL`, and `VERCEL_PROJECT_PRODUCTION_URL` automatically. The app uses those values to allow the current production deployment and each preview deployment without widening `ALLOWED_HOSTS` to every `*.vercel.app` hostname.
 
