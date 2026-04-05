@@ -9,7 +9,7 @@ requires-python = ">=3.12,<3.13"
 dynamic = ["dependencies"]
 
 [tool.setuptools]
-packages = ["core", "deep_workflow"]
+packages = {find = {include = ["core*", "deep_workflow*"]}}
 
 [tool.setuptools.dynamic]
 dependencies = {file = ["requirements.txt"]}
