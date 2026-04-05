@@ -105,7 +105,7 @@ This repository now includes the foundation plus roadmap slices 1 through 9:
 
 Prerequisites:
 
-- Python 3.12+
+- Python 3.12.x
 - PostgreSQL 16+ if you want local PostgreSQL instead of the default SQLite fallback
 
 Bootstrap the project:
@@ -141,7 +141,7 @@ If `DATABASE_URL` is omitted, Django falls back to SQLite for the quickest local
 The repository now includes the files needed to host the app on Vercel production and PR preview environments:
 
 - `wsgi.py` exposes the Django WSGI app through Vercel's Python runtime
-- `.python-version` pins the Python runtime that Vercel should use
+- `.python-version` pins Vercel to Python 3.12, matching the project's supported local Python 3.12.x runtime
 - `vercel.json` sets the Vercel build command and rewrites
 - `scripts/vercel-build.sh` always runs `collectstatic` and only runs migrations when `VERCEL_RUN_MIGRATIONS=1`
 - hosted settings derive trusted hosts and CSRF origins from `APP_BASE_URL` plus Vercel's runtime URLs, then enable HTTPS redirects, secure cookies, conservative HSTS defaults, WhiteNoise static serving, and request-ID-aware logging
