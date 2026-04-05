@@ -14,6 +14,7 @@ from .deployment import (
     deployment_environment,
     deployment_git_sha,
     hosted_environment,
+    hsts_preload_enabled,
 )
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -35,7 +36,7 @@ env = environ.Env(
     DJANGO_REQUEST_LOG_LEVEL=(str, "WARNING"),
     DJANGO_SECRET_KEY=(str, "unsafe-local-development-key"),
     DJANGO_SECURE_HSTS_INCLUDE_SUBDOMAINS=(bool, True),
-    DJANGO_SECURE_HSTS_PRELOAD=(bool, True),
+    DJANGO_SECURE_HSTS_PRELOAD=(bool, False),
     DJANGO_SECURE_HSTS_SECONDS=(int, 3600),
     DJANGO_SECURE_PROXY_SSL_HEADER_NAME=(str, "HTTP_X_FORWARDED_PROTO"),
     DJANGO_SECURE_PROXY_SSL_HEADER_VALUE=(str, "https"),
@@ -74,8 +75,8 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
-    "whitenoise.middleware.WhiteNoiseMiddleware",
     "core.middleware.RequestIDMiddleware",
+    "whitenoise.middleware.WhiteNoiseMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
@@ -166,9 +167,14 @@ SECURE_HSTS_INCLUDE_SUBDOMAINS = env.bool(
     "DJANGO_SECURE_HSTS_INCLUDE_SUBDOMAINS",
     default=HOSTED_ENV,
 )
-SECURE_HSTS_PRELOAD = env.bool(
+HSTS_PRELOAD_OPT_IN = env.bool(
     "DJANGO_SECURE_HSTS_PRELOAD",
-    default=HOSTED_ENV,
+    default=False,
+)
+SECURE_HSTS_PRELOAD = hsts_preload_enabled(
+    preload_opt_in=HSTS_PRELOAD_OPT_IN,
+    secure_hsts_seconds=SECURE_HSTS_SECONDS,
+    include_subdomains=SECURE_HSTS_INCLUDE_SUBDOMAINS,
 )
 USE_X_FORWARDED_HOST = env.bool(
     "DJANGO_USE_X_FORWARDED_HOST",

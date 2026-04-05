@@ -1,10 +1,14 @@
+from django.conf import settings
+
 from deep_workflow.deployment import (
+    HSTS_PRELOAD_MIN_SECONDS,
     build_allowed_hosts,
     build_csrf_trusted_origins,
     canonical_deployment_url,
     default_debug,
     deployment_environment,
     hosted_environment,
+    hsts_preload_enabled,
 )
 
 
@@ -70,3 +74,46 @@ def test_default_debug_uses_loaded_vercel_flags() -> None:
     assert default_debug({}) is True
     assert default_debug({"VERCEL_ENV": "production"}) is False
     assert default_debug({"VERCEL": "true"}) is False
+
+
+def test_hsts_preload_enabled_requires_explicit_safe_opt_in() -> None:
+    assert (
+        hsts_preload_enabled(
+            preload_opt_in=False,
+            secure_hsts_seconds=HSTS_PRELOAD_MIN_SECONDS,
+            include_subdomains=True,
+        )
+        is False
+    )
+    assert (
+        hsts_preload_enabled(
+            preload_opt_in=True,
+            secure_hsts_seconds=HSTS_PRELOAD_MIN_SECONDS - 1,
+            include_subdomains=True,
+        )
+        is False
+    )
+    assert (
+        hsts_preload_enabled(
+            preload_opt_in=True,
+            secure_hsts_seconds=HSTS_PRELOAD_MIN_SECONDS,
+            include_subdomains=False,
+        )
+        is False
+    )
+    assert (
+        hsts_preload_enabled(
+            preload_opt_in=True,
+            secure_hsts_seconds=HSTS_PRELOAD_MIN_SECONDS,
+            include_subdomains=True,
+        )
+        is True
+    )
+
+
+def test_request_id_middleware_precedes_whitenoise() -> None:
+    assert settings.MIDDLEWARE.index(
+        "core.middleware.RequestIDMiddleware"
+    ) < settings.MIDDLEWARE.index(
+        "whitenoise.middleware.WhiteNoiseMiddleware",
+    )

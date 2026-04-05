@@ -142,8 +142,8 @@ The repository now includes the files needed to host the app on Vercel productio
 
 - `wsgi.py` exposes the Django WSGI app through Vercel's Python runtime
 - `vercel.json` pins the Python function runtime and build command
-- `scripts/vercel-build.sh` always runs `collectstatic`, runs migrations automatically in production, and only runs preview migrations when `VERCEL_RUN_MIGRATIONS=1`
-- hosted settings derive trusted hosts and CSRF origins from `APP_BASE_URL` plus Vercel's runtime URLs, then enable HTTPS redirects, secure cookies, HSTS, WhiteNoise static serving, and request-ID-aware logging
+- `scripts/vercel-build.sh` always runs `collectstatic` and only runs migrations when `VERCEL_RUN_MIGRATIONS=1`
+- hosted settings derive trusted hosts and CSRF origins from `APP_BASE_URL` plus Vercel's runtime URLs, then enable HTTPS redirects, secure cookies, conservative HSTS defaults, WhiteNoise static serving, and request-ID-aware logging
 
 ### Required environment variables
 
@@ -152,7 +152,8 @@ The repository now includes the files needed to host the app on Vercel productio
 | `DJANGO_SECRET_KEY` | Required | Required | Use a unique secret per environment. |
 | `DATABASE_URL` | Required | Required | Point previews at an isolated PostgreSQL database or branch database, not production. |
 | `APP_BASE_URL` | `https://deep-workflow.vercel.app` | Optional | Sets the canonical production URL and anchors the production host/origin configuration. |
-| `VERCEL_RUN_MIGRATIONS` | Optional | Set to `1` only for isolated preview databases | Production migrations run automatically; preview migrations stay opt-in. |
+| `DJANGO_SECURE_HSTS_PRELOAD` | Optional | Optional | Leave unset unless you intentionally want preload and already satisfy the preload requirements (`includeSubDomains` plus at least `31536000` seconds). |
+| `VERCEL_RUN_MIGRATIONS` | Set to `1` only for deliberate schema rollouts | Set to `1` only for isolated preview databases | Build-time migrations are always opt-in. |
 
 Vercel injects `VERCEL_ENV`, `VERCEL_URL`, `VERCEL_BRANCH_URL`, and `VERCEL_PROJECT_PRODUCTION_URL` automatically. The app uses those values to allow the current production deployment and each preview deployment without widening `ALLOWED_HOSTS` to every `*.vercel.app` hostname.
 
@@ -161,7 +162,7 @@ Vercel injects `VERCEL_ENV`, `VERCEL_URL`, `VERCEL_BRANCH_URL`, and `VERCEL_PROJ
 1. Connect the repository to Vercel and keep `main` as the production branch.
 2. Set `APP_BASE_URL=https://deep-workflow.vercel.app` in the Production environment.
 3. Set `DJANGO_SECRET_KEY` and `DATABASE_URL` in both Production and Preview. Use a separate preview database if you want preview deployments to run migrations.
-4. Let pushes to non-`main` branches create Preview deployments automatically. If the preview database is isolated, set `VERCEL_RUN_MIGRATIONS=1` for Preview so schema changes apply during the build.
+4. Let pushes to non-`main` branches create Preview deployments automatically. Leave `VERCEL_RUN_MIGRATIONS` unset for normal deploys; only turn it on for isolated preview databases or a coordinated production schema rollout, then redeploy intentionally.
 5. After each deployment, check `GET /health/ready/` for database readiness and `GET /health/live/` for the lightweight liveness probe.
 
 ### Health checks and monitoring hooks
@@ -170,7 +171,7 @@ Vercel injects `VERCEL_ENV`, `VERCEL_URL`, `VERCEL_BRANCH_URL`, and `VERCEL_PROJ
 - `GET /health/ready/` checks database connectivity and returns HTTP `503` when the database is unavailable.
 - `GET /health/` remains a readiness alias for simple uptime integrations.
 - Health responses include the deployment environment and, when Vercel provides them, the deployment URL and git SHA.
-- Every request gets an `X-Request-ID` response header, and the default log format writes `request_id=... env=...` to stdout so Vercel logs and log drains can correlate failures quickly.
+- Responses include an `X-Request-ID` response header, and the default log format writes `request_id=... env=...` to stdout so Vercel logs and log drains can correlate failures quickly.
 
 ## PostgreSQL backup and restore
 

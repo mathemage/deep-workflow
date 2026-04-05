@@ -8,6 +8,7 @@ DEPLOYMENT_URL_KEYS = (
     "VERCEL_URL",
 )
 DEPLOYMENT_ENVIRONMENTS = {"preview", "production", "development"}
+HSTS_PRELOAD_MIN_SECONDS = 31536000
 
 
 def default_debug(environ: Mapping[str, str]) -> bool:
@@ -15,6 +16,19 @@ def default_debug(environ: Mapping[str, str]) -> bool:
         "preview",
         "production",
     } and environ.get("VERCEL", "").strip().lower() not in {"1", "true"}
+
+
+def hsts_preload_enabled(
+    *,
+    preload_opt_in: bool,
+    secure_hsts_seconds: int,
+    include_subdomains: bool,
+) -> bool:
+    return (
+        preload_opt_in
+        and secure_hsts_seconds >= HSTS_PRELOAD_MIN_SECONDS
+        and include_subdomains
+    )
 
 
 def deployment_environment(environ: Mapping[str, str]) -> str:
