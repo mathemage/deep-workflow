@@ -150,7 +150,7 @@ The repository now includes the files needed to host the app on Vercel productio
 
 | Variable | Production | Preview | Notes |
 | --- | --- | --- | --- |
-| `DJANGO_SECRET_KEY` | Required | Required | Use a unique secret per environment. |
+| `DJANGO_SECRET_KEY` | Required | Required | Use a unique secret per environment. Hosted builds fail fast until this is set. |
 | `DATABASE_URL` | Required | Required | Point previews at an isolated PostgreSQL database or branch database, not production. |
 | `APP_BASE_URL` | `https://deep-workflow.vercel.app` | Optional | Sets the canonical production URL and anchors the production host/origin configuration. |
 | `DJANGO_SECURE_HSTS_PRELOAD` | Optional | Optional | Leave unset unless you intentionally want preload and already satisfy the preload requirements (`includeSubDomains` plus at least `31536000` seconds). |
