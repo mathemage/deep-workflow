@@ -143,7 +143,7 @@ The repository now includes the files needed to host the app on Vercel productio
 - `wsgi.py` exposes the Django WSGI app through Vercel's Python runtime
 - `.python-version` pins Vercel to Python 3.12, matching the project's supported local Python 3.12.x runtime
 - `vercel.json` sets the Vercel build command and rewrites
-- `scripts/vercel-build.sh` always runs `collectstatic` and only runs migrations when `VERCEL_RUN_MIGRATIONS=1`
+- `scripts/vercel-build.sh` requires `DJANGO_SECRET_KEY` and `DATABASE_URL` for hosted builds, verifies database readiness, always runs `collectstatic`, and only runs migrations when `VERCEL_RUN_MIGRATIONS=1`
 - hosted settings derive trusted hosts and CSRF origins from `APP_BASE_URL` plus Vercel's runtime URLs, then enable HTTPS redirects, secure cookies, conservative HSTS defaults, WhiteNoise static serving, and request-ID-aware logging
 
 ### Required environment variables
