@@ -9,6 +9,14 @@ if [[ "$vercel_environment" == "preview" || "$vercel_environment" == "production
     echo "DJANGO_SECRET_KEY is required for Vercel ${vercel_environment} builds. Add it to that environment in Vercel project settings, then redeploy." >&2
     exit 1
   fi
+  if [[ -z "${DATABASE_URL:-}" ]]; then
+    echo "DATABASE_URL is required for Vercel ${vercel_environment} builds. Add it to that environment in Vercel project settings, then redeploy." >&2
+    exit 1
+  fi
+fi
+
+if [[ "$vercel_environment" == "preview" || "$vercel_environment" == "production" || "$vercel_environment" == "development" || "$vercel_runtime" == "1" || "$vercel_runtime" == "true" ]]; then
+  python manage.py check_database
 fi
 
 python manage.py collectstatic --noinput
