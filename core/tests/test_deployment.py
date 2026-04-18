@@ -1,3 +1,8 @@
+import json
+import os
+import subprocess
+import sys
+
 from django.conf import settings
 
 from deep_workflow.deployment import (
@@ -117,3 +122,58 @@ def test_request_id_middleware_precedes_whitenoise() -> None:
     ) < settings.MIDDLEWARE.index(
         "whitenoise.middleware.WhiteNoiseMiddleware",
     )
+
+
+def load_hosted_sqlite_settings(*, enable_fallback: bool) -> tuple[str, str, str]:
+    env = os.environ.copy()
+    env.update(
+        {
+            "DJANGO_DEBUG": "False",
+            "DJANGO_SECRET_KEY": "x" * 64,
+            "VERCEL_ENV": "production",
+            "VERCEL": "1",
+            "DATABASE_URL": "sqlite:///db.sqlite3",
+            "DJANGO_ENABLE_HOSTED_SQLITE_FALLBACK": "1" if enable_fallback else "0",
+        }
+    )
+    command = [
+        sys.executable,
+        "-c",
+        (
+            "import json; "
+            "import deep_workflow.settings as settings; "
+            "print(json.dumps(["
+            "str(settings.HOSTED_SQLITE_FALLBACK), "
+            "getattr(settings, 'SESSION_ENGINE', ''), "
+            "getattr(settings, 'MESSAGE_STORAGE', '')"
+            "]))"
+        ),
+    ]
+    result = subprocess.run(
+        command,
+        env=env,
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+    return tuple(json.loads(result.stdout))
+
+
+def test_hosted_sqlite_fallback_is_disabled_by_default() -> None:
+    hosted_sqlite_fallback, session_engine, message_storage = (
+        load_hosted_sqlite_settings(enable_fallback=False)
+    )
+
+    assert hosted_sqlite_fallback == "False"
+    assert session_engine == ""
+    assert message_storage == ""
+
+
+def test_hosted_sqlite_fallback_requires_explicit_opt_in() -> None:
+    hosted_sqlite_fallback, session_engine, message_storage = (
+        load_hosted_sqlite_settings(enable_fallback=True)
+    )
+
+    assert hosted_sqlite_fallback == "True"
+    assert session_engine == "django.contrib.sessions.backends.signed_cookies"
+    assert message_storage == "django.contrib.messages.storage.cookie.CookieStorage"

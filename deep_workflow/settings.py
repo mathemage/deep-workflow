@@ -32,6 +32,7 @@ env = environ.Env(
     DJANGO_DB_CONN_MAX_AGE=(int, 60),
     DJANGO_DB_SSL_MODE=(str, "require"),
     DJANGO_DEBUG=(bool, DEFAULT_DEBUG),
+    DJANGO_ENABLE_HOSTED_SQLITE_FALLBACK=(bool, False),
     DJANGO_LOG_LEVEL=(str, "DEBUG" if DEFAULT_DEBUG else "INFO"),
     DJANGO_REQUEST_LOG_LEVEL=(str, "WARNING"),
     DJANGO_SECRET_KEY=(str, "unsafe-local-development-key"),
@@ -112,6 +113,11 @@ DATABASES = {
 }
 DATABASES["default"]["CONN_MAX_AGE"] = env.int("DJANGO_DB_CONN_MAX_AGE", default=60)
 DATABASES["default"]["CONN_HEALTH_CHECKS"] = True
+HOSTED_SQLITE_FALLBACK = (
+    HOSTED_ENV
+    and env.bool("DJANGO_ENABLE_HOSTED_SQLITE_FALLBACK")
+    and DATABASES["default"]["ENGINE"] == "django.db.backends.sqlite3"
+)
 
 if HOSTED_ENV and DATABASES["default"]["ENGINE"] == "django.db.backends.postgresql":
     DATABASES["default"].setdefault("OPTIONS", {})
@@ -210,6 +216,10 @@ WHITENOISE_USE_FINDERS = DEBUG
 LOGIN_URL = "login"
 LOGIN_REDIRECT_URL = "home"
 LOGOUT_REDIRECT_URL = "login"
+
+if HOSTED_SQLITE_FALLBACK:
+    SESSION_ENGINE = "django.contrib.sessions.backends.signed_cookies"
+    MESSAGE_STORAGE = "django.contrib.messages.storage.cookie.CookieStorage"
 
 LOG_LEVEL = env("DJANGO_LOG_LEVEL").upper()
 REQUEST_LOG_LEVEL = env("DJANGO_REQUEST_LOG_LEVEL").upper()
