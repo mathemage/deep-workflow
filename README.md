@@ -186,7 +186,7 @@ Vercel injects `VERCEL_ENV`, `VERCEL_URL`, `VERCEL_BRANCH_URL`, and `VERCEL_PROJ
 
 Normal hosted deploys should continue to fail fast if `DATABASE_URL` is missing or broken. If you need a temporary outage recovery mode, you can opt into the hosted SQLite fallback by setting `DJANGO_ENABLE_HOSTED_SQLITE_FALLBACK=1` alongside a SQLite `DATABASE_URL`.
 
-This mode is for emergency recovery only. It moves sessions and flash messages to signed cookies so the app can run from a bundled SQLite snapshot on Vercel, but it should not replace the normal PostgreSQL-backed production path.
+This mode is for emergency recovery only. It moves sessions and flash messages to signed cookies so the app can run from a bundled SQLite snapshot on Vercel, but it should not replace the normal PostgreSQL-backed production path. Only use it when your session and message payloads are small enough to fit within browser cookie limits, and do not treat the cookie contents as secret: signed cookies are tamper-resistant, but their contents remain readable by the client.
 
 ### Health checks and monitoring hooks
 

@@ -124,7 +124,11 @@ def test_request_id_middleware_precedes_whitenoise() -> None:
     )
 
 
-def load_hosted_sqlite_settings(*, enable_fallback: bool) -> tuple[str, str, str]:
+def load_hosted_sqlite_settings(
+    *,
+    enable_fallback: bool,
+    database_url: str = "sqlite:///db.sqlite3",
+) -> tuple[bool, str, str]:
     env = os.environ.copy()
     env.update(
         {
@@ -132,7 +136,7 @@ def load_hosted_sqlite_settings(*, enable_fallback: bool) -> tuple[str, str, str
             "DJANGO_SECRET_KEY": "x" * 64,
             "VERCEL_ENV": "production",
             "VERCEL": "1",
-            "DATABASE_URL": "sqlite:///db.sqlite3",
+            "DATABASE_URL": database_url,
             "DJANGO_ENABLE_HOSTED_SQLITE_FALLBACK": "1" if enable_fallback else "0",
         }
     )
@@ -143,7 +147,7 @@ def load_hosted_sqlite_settings(*, enable_fallback: bool) -> tuple[str, str, str
             "import json; "
             "import deep_workflow.settings as settings; "
             "print(json.dumps(["
-            "str(settings.HOSTED_SQLITE_FALLBACK), "
+            "settings.HOSTED_SQLITE_FALLBACK, "
             "getattr(settings, 'SESSION_ENGINE', ''), "
             "getattr(settings, 'MESSAGE_STORAGE', '')"
             "]))"
@@ -160,13 +164,25 @@ def load_hosted_sqlite_settings(*, enable_fallback: bool) -> tuple[str, str, str
 
 
 def test_hosted_sqlite_fallback_is_disabled_by_default() -> None:
-    hosted_sqlite_fallback, session_engine, message_storage = (
-        load_hosted_sqlite_settings(enable_fallback=False)
+    env = os.environ.copy()
+    env.update(
+        {
+            "DJANGO_DEBUG": "False",
+            "DJANGO_SECRET_KEY": "x" * 64,
+            "VERCEL_ENV": "production",
+            "VERCEL": "1",
+            "DATABASE_URL": "sqlite:///db.sqlite3",
+            "DJANGO_ENABLE_HOSTED_SQLITE_FALLBACK": "0",
+        }
     )
-
-    assert hosted_sqlite_fallback == "False"
-    assert session_engine == ""
-    assert message_storage == ""
+    result = subprocess.run(
+        [sys.executable, "-c", "import deep_workflow.settings"],
+        env=env,
+        capture_output=True,
+        text=True,
+    )
+    assert result.returncode != 0
+    assert "ImproperlyConfigured" in result.stderr
 
 
 def test_hosted_sqlite_fallback_requires_explicit_opt_in() -> None:
@@ -174,6 +190,19 @@ def test_hosted_sqlite_fallback_requires_explicit_opt_in() -> None:
         load_hosted_sqlite_settings(enable_fallback=True)
     )
 
-    assert hosted_sqlite_fallback == "True"
+    assert hosted_sqlite_fallback is True
     assert session_engine == "django.contrib.sessions.backends.signed_cookies"
     assert message_storage == "django.contrib.messages.storage.cookie.CookieStorage"
+
+
+def test_hosted_sqlite_fallback_flag_ignored_for_postgresql() -> None:
+    hosted_sqlite_fallback, session_engine, message_storage = (
+        load_hosted_sqlite_settings(
+            enable_fallback=True,
+            database_url="postgres://user:pass@localhost:5432/mydb",
+        )
+    )
+
+    assert hosted_sqlite_fallback is False
+    assert session_engine == ""
+    assert message_storage == ""

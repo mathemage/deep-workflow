@@ -119,6 +119,16 @@ HOSTED_SQLITE_FALLBACK = (
     and DATABASES["default"]["ENGINE"] == "django.db.backends.sqlite3"
 )
 
+if (
+    HOSTED_ENV
+    and DATABASES["default"]["ENGINE"] == "django.db.backends.sqlite3"
+    and not HOSTED_SQLITE_FALLBACK
+):
+    raise ImproperlyConfigured(
+        "Hosted deployments must not use SQLite unless "
+        "DJANGO_ENABLE_HOSTED_SQLITE_FALLBACK is enabled."
+    )
+
 if HOSTED_ENV and DATABASES["default"]["ENGINE"] == "django.db.backends.postgresql":
     DATABASES["default"].setdefault("OPTIONS", {})
     DATABASES["default"]["OPTIONS"].setdefault(
