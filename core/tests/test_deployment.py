@@ -289,7 +289,7 @@ def test_hosted_sqlite_fallback_is_not_applied_to_invalid_database_url() -> None
             "DJANGO_SECRET_KEY": "x" * 64,
             "VERCEL_ENV": "production",
             "VERCEL": "1",
-            "DATABASE_URL": "not-a-valid-database-url",
+            "DATABASE_URL": "invalid://definitely-not-a-supported-database-url",
             "DJANGO_ENABLE_HOSTED_SQLITE_FALLBACK": "1",
         }
     )
