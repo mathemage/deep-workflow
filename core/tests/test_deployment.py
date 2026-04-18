@@ -126,7 +126,7 @@ def test_request_id_middleware_precedes_whitenoise() -> None:
 
 def load_hosted_settings(
     *,
-    enable_fallback: bool,
+    enable_fallback: bool | None,
     database_url: str = "sqlite:///db.sqlite3",
 ) -> tuple[bool, str, str]:
     env = os.environ.copy()
@@ -137,9 +137,12 @@ def load_hosted_settings(
             "VERCEL_ENV": "production",
             "VERCEL": "1",
             "DATABASE_URL": database_url,
-            "DJANGO_ENABLE_HOSTED_SQLITE_FALLBACK": "1" if enable_fallback else "0",
         }
     )
+    if enable_fallback is None:
+        env.pop("DJANGO_ENABLE_HOSTED_SQLITE_FALLBACK", None)
+    else:
+        env["DJANGO_ENABLE_HOSTED_SQLITE_FALLBACK"] = "1" if enable_fallback else "0"
     command = [
         sys.executable,
         "-c",
@@ -163,7 +166,7 @@ def load_hosted_settings(
     return tuple(json.loads(result.stdout))
 
 
-def test_hosted_sqlite_fallback_is_disabled_by_default() -> None:
+def test_hosted_sqlite_fallback_is_disabled_by_default_when_flag_is_zero() -> None:
     env = os.environ.copy()
     env.update(
         {
@@ -183,6 +186,36 @@ def test_hosted_sqlite_fallback_is_disabled_by_default() -> None:
     )
     assert result.returncode != 0
     assert "ImproperlyConfigured" in result.stderr
+    assert "Hosted deployments require a valid PostgreSQL DATABASE_URL" in result.stderr
+    assert "Do not use SQLite unless DJANGO_ENABLE_HOSTED_SQLITE_FALLBACK" in (
+        result.stderr
+    )
+
+
+def test_hosted_sqlite_fallback_is_disabled_by_default_when_flag_is_unset() -> None:
+    env = os.environ.copy()
+    env.update(
+        {
+            "DJANGO_DEBUG": "False",
+            "DJANGO_SECRET_KEY": "x" * 64,
+            "VERCEL_ENV": "production",
+            "VERCEL": "1",
+            "DATABASE_URL": "sqlite:///db.sqlite3",
+        }
+    )
+    env.pop("DJANGO_ENABLE_HOSTED_SQLITE_FALLBACK", None)
+    result = subprocess.run(
+        [sys.executable, "-c", "import deep_workflow.settings"],
+        env=env,
+        capture_output=True,
+        text=True,
+    )
+    assert result.returncode != 0
+    assert "ImproperlyConfigured" in result.stderr
+    assert "Hosted deployments require a valid PostgreSQL DATABASE_URL" in result.stderr
+    assert "Do not use SQLite unless DJANGO_ENABLE_HOSTED_SQLITE_FALLBACK" in (
+        result.stderr
+    )
 
 
 def test_hosted_sqlite_fallback_requires_explicit_opt_in() -> None:

@@ -125,8 +125,9 @@ if (
     and not HOSTED_SQLITE_FALLBACK
 ):
     raise ImproperlyConfigured(
-        "Hosted deployments must not use SQLite unless "
-        "DJANGO_ENABLE_HOSTED_SQLITE_FALLBACK is enabled."
+        "Hosted deployments require a valid PostgreSQL DATABASE_URL. "
+        "Do not use SQLite unless DJANGO_ENABLE_HOSTED_SQLITE_FALLBACK "
+        "is enabled for emergency recovery."
     )
 
 if HOSTED_ENV and DATABASES["default"]["ENGINE"] == "django.db.backends.postgresql":
