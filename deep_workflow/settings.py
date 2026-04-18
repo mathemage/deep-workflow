@@ -113,15 +113,16 @@ DATABASES = {
 }
 DATABASES["default"]["CONN_MAX_AGE"] = env.int("DJANGO_DB_CONN_MAX_AGE", default=60)
 DATABASES["default"]["CONN_HEALTH_CHECKS"] = True
+DATABASE_ENGINE = DATABASES["default"].get("ENGINE")
 HOSTED_SQLITE_FALLBACK = (
     HOSTED_ENV
     and env.bool("DJANGO_ENABLE_HOSTED_SQLITE_FALLBACK")
-    and DATABASES["default"]["ENGINE"] == "django.db.backends.sqlite3"
+    and DATABASE_ENGINE == "django.db.backends.sqlite3"
 )
 
 if (
     HOSTED_ENV
-    and DATABASES["default"]["ENGINE"] == "django.db.backends.sqlite3"
+    and DATABASE_ENGINE != "django.db.backends.postgresql"
     and not HOSTED_SQLITE_FALLBACK
 ):
     raise ImproperlyConfigured(
@@ -130,7 +131,7 @@ if (
         "is enabled for emergency recovery."
     )
 
-if HOSTED_ENV and DATABASES["default"]["ENGINE"] == "django.db.backends.postgresql":
+if HOSTED_ENV and DATABASE_ENGINE == "django.db.backends.postgresql":
     DATABASES["default"].setdefault("OPTIONS", {})
     DATABASES["default"]["OPTIONS"].setdefault(
         "sslmode",
