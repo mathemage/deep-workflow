@@ -124,7 +124,7 @@ def test_request_id_middleware_precedes_whitenoise() -> None:
     )
 
 
-def load_hosted_sqlite_settings(
+def load_hosted_settings(
     *,
     enable_fallback: bool,
     database_url: str = "sqlite:///db.sqlite3",
@@ -186,8 +186,8 @@ def test_hosted_sqlite_fallback_is_disabled_by_default() -> None:
 
 
 def test_hosted_sqlite_fallback_requires_explicit_opt_in() -> None:
-    hosted_sqlite_fallback, session_engine, message_storage = (
-        load_hosted_sqlite_settings(enable_fallback=True)
+    hosted_sqlite_fallback, session_engine, message_storage = load_hosted_settings(
+        enable_fallback=True
     )
 
     assert hosted_sqlite_fallback is True
@@ -196,11 +196,9 @@ def test_hosted_sqlite_fallback_requires_explicit_opt_in() -> None:
 
 
 def test_hosted_sqlite_fallback_flag_ignored_for_postgresql() -> None:
-    hosted_sqlite_fallback, session_engine, message_storage = (
-        load_hosted_sqlite_settings(
-            enable_fallback=True,
-            database_url="postgres://user:pass@localhost:5432/mydb",
-        )
+    hosted_sqlite_fallback, session_engine, message_storage = load_hosted_settings(
+        enable_fallback=True,
+        database_url="postgres://testuser:testpass@localhost:5432/testdb",
     )
 
     assert hosted_sqlite_fallback is False
