@@ -16,6 +16,17 @@ from deep_workflow.deployment import (
     hsts_preload_enabled,
 )
 
+IMPORT_HOSTED_SETTINGS_COMMAND = (
+    "import environ; "
+    "environ.Env.read_env = staticmethod(lambda *args, **kwargs: None); "
+    "import deep_workflow.settings as settings; "
+    "print(json.dumps(["
+    "settings.HOSTED_SQLITE_FALLBACK, "
+    "getattr(settings, 'SESSION_ENGINE', ''), "
+    "getattr(settings, 'MESSAGE_STORAGE', '')"
+    "]))"
+)
+
 
 def test_build_allowed_hosts_adds_vercel_runtime_hosts() -> None:
     environ = {
@@ -149,15 +160,7 @@ def load_hosted_settings(
     command = [
         sys.executable,
         "-c",
-        (
-            "import json; "
-            "import deep_workflow.settings as settings; "
-            "print(json.dumps(["
-            "settings.HOSTED_SQLITE_FALLBACK, "
-            "getattr(settings, 'SESSION_ENGINE', ''), "
-            "getattr(settings, 'MESSAGE_STORAGE', '')"
-            "]))"
-        ),
+        f"import json; {IMPORT_HOSTED_SETTINGS_COMMAND}",
     ]
     result = subprocess.run(
         command,
@@ -182,7 +185,15 @@ def test_hosted_sqlite_fallback_is_disabled_by_default_when_flag_is_zero() -> No
         }
     )
     result = subprocess.run(
-        [sys.executable, "-c", "import deep_workflow.settings"],
+        [
+            sys.executable,
+            "-c",
+            (
+                "import environ; "
+                "environ.Env.read_env = staticmethod(lambda *args, **kwargs: None); "
+                "import deep_workflow.settings"
+            ),
+        ],
         env=env,
         capture_output=True,
         text=True,
@@ -208,7 +219,15 @@ def test_hosted_sqlite_fallback_is_disabled_by_default_when_flag_is_unset() -> N
     )
     env.pop("DJANGO_ENABLE_HOSTED_SQLITE_FALLBACK", None)
     result = subprocess.run(
-        [sys.executable, "-c", "import deep_workflow.settings"],
+        [
+            sys.executable,
+            "-c",
+            (
+                "import environ; "
+                "environ.Env.read_env = staticmethod(lambda *args, **kwargs: None); "
+                "import deep_workflow.settings"
+            ),
+        ],
         env=env,
         capture_output=True,
         text=True,
@@ -234,7 +253,15 @@ def test_hosted_sqlite_fallback_is_disabled_when_database_url_is_unset() -> None
     env.pop("DATABASE_URL", None)
     env.pop("DJANGO_ENABLE_HOSTED_SQLITE_FALLBACK", None)
     result = subprocess.run(
-        [sys.executable, "-c", "import deep_workflow.settings"],
+        [
+            sys.executable,
+            "-c",
+            (
+                "import environ; "
+                "environ.Env.read_env = staticmethod(lambda *args, **kwargs: None); "
+                "import deep_workflow.settings"
+            ),
+        ],
         env=env,
         capture_output=True,
         text=True,
@@ -270,7 +297,15 @@ def test_hosted_sqlite_fallback_requires_explicit_database_url() -> None:
     )
     env.pop("DATABASE_URL", None)
     result = subprocess.run(
-        [sys.executable, "-c", "import deep_workflow.settings"],
+        [
+            sys.executable,
+            "-c",
+            (
+                "import environ; "
+                "environ.Env.read_env = staticmethod(lambda *args, **kwargs: None); "
+                "import deep_workflow.settings"
+            ),
+        ],
         env=env,
         capture_output=True,
         text=True,
@@ -308,7 +343,15 @@ def test_hosted_sqlite_fallback_is_not_applied_to_invalid_database_url() -> None
         }
     )
     result = subprocess.run(
-        [sys.executable, "-c", "import deep_workflow.settings"],
+        [
+            sys.executable,
+            "-c",
+            (
+                "import environ; "
+                "environ.Env.read_env = staticmethod(lambda *args, **kwargs: None); "
+                "import deep_workflow.settings"
+            ),
+        ],
         env=env,
         capture_output=True,
         text=True,
