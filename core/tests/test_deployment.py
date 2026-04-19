@@ -257,9 +257,7 @@ def test_hosted_sqlite_fallback_requires_explicit_opt_in() -> None:
     assert message_storage == "django.contrib.messages.storage.cookie.CookieStorage"
 
 
-def test_hosted_sqlite_fallback_supports_unset_database_url_with_explicit_opt_in() -> (
-    None
-):
+def test_hosted_sqlite_fallback_supports_unset_database_url_with_explicit_opt_in() -> None:
     hosted_sqlite_fallback, session_engine, message_storage = load_hosted_settings(
         enable_fallback=True,
         database_url=None,
