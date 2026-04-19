@@ -153,6 +153,7 @@ The repository now includes the files needed to host the app on Vercel productio
 | `DJANGO_SECRET_KEY` | Required | Required | Use a unique secret per environment. Hosted builds fail fast until this is set. |
 | `DATABASE_URL` | Required | Required | Point previews at an isolated PostgreSQL database or branch database, not production. |
 | `APP_BASE_URL` | `https://deep-workflow.vercel.app` | Optional | Sets the canonical production URL and anchors the production host/origin configuration. |
+| `DJANGO_ENABLE_HOSTED_SQLITE_FALLBACK` | Emergency only | Emergency only | Leave unset for normal deploys. Set to `1` only when intentionally activating the temporary hosted SQLite recovery mode. |
 | `DJANGO_SECURE_HSTS_PRELOAD` | Optional | Optional | Leave unset unless you intentionally want preload and already satisfy the preload requirements (`includeSubDomains` plus at least `31536000` seconds). |
 | `VERCEL_RUN_MIGRATIONS` | Set to `1` only for deliberate schema rollouts | Set to `1` only for isolated preview databases | Build-time migrations are always opt-in. |
 
@@ -180,6 +181,12 @@ Vercel injects `VERCEL_ENV`, `VERCEL_URL`, `VERCEL_BRANCH_URL`, and `VERCEL_PROJ
 3. Set `DJANGO_SECRET_KEY` and `DATABASE_URL` in both Production and Preview. Use a separate preview database if you want preview deployments to run migrations.
 4. Let pushes to non-`main` branches create Preview deployments automatically. Leave `VERCEL_RUN_MIGRATIONS` unset for normal deploys; only turn it on for isolated preview databases or a coordinated production schema rollout, then redeploy intentionally.
 5. After each deployment, check `GET /health/ready/` for database readiness and `GET /health/live/` for the lightweight liveness probe.
+
+#### Emergency hosted SQLite recovery
+
+Normal hosted deploys should continue to fail fast if `DATABASE_URL` is missing or broken. If you need a temporary outage recovery mode, you can opt into the hosted SQLite fallback by setting `DJANGO_ENABLE_HOSTED_SQLITE_FALLBACK=1` alongside a SQLite `DATABASE_URL`.
+
+This mode is for emergency recovery only. It moves sessions and flash messages to signed cookies so the app can run from a bundled SQLite snapshot on Vercel, but it should not replace the normal PostgreSQL-backed production path. Only use it when your session and message payloads are small enough to fit within browser cookie limits, and do not treat the cookie contents as secret: signed cookies are tamper-resistant, but their contents remain readable by the client.
 
 ### Health checks and monitoring hooks
 

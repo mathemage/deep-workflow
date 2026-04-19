@@ -32,6 +32,7 @@ env = environ.Env(
     DJANGO_DB_CONN_MAX_AGE=(int, 60),
     DJANGO_DB_SSL_MODE=(str, "require"),
     DJANGO_DEBUG=(bool, DEFAULT_DEBUG),
+    DJANGO_ENABLE_HOSTED_SQLITE_FALLBACK=(bool, False),
     DJANGO_LOG_LEVEL=(str, "DEBUG" if DEFAULT_DEBUG else "INFO"),
     DJANGO_REQUEST_LOG_LEVEL=(str, "WARNING"),
     DJANGO_SECRET_KEY=(str, "unsafe-local-development-key"),
@@ -62,6 +63,13 @@ CSRF_TRUSTED_ORIGINS = build_csrf_trusted_origins(
 
 if not DEBUG and SECRET_KEY == "unsafe-local-development-key":
     raise ImproperlyConfigured("Set DJANGO_SECRET_KEY before disabling DJANGO_DEBUG.")
+
+HOSTED_DATABASE_CONFIGURATION_ERROR = (
+    "Hosted deployments require one of these database configurations: "
+    "(1) a valid PostgreSQL DATABASE_URL; or "
+    "(2) for emergency recovery only, DJANGO_ENABLE_HOSTED_SQLITE_FALLBACK=1 "
+    "together with an explicit SQLite DATABASE_URL."
+)
 
 INSTALLED_APPS = [
     "django.contrib.admin",
@@ -107,13 +115,36 @@ TEMPLATES = [
 WSGI_APPLICATION = "deep_workflow.wsgi.application"
 
 
-DATABASES = {
-    "default": env.db("DATABASE_URL", default=f"sqlite:///{BASE_DIR / 'db.sqlite3'}")
-}
+try:
+    default_database = env.db(
+        "DATABASE_URL",
+        default=f"sqlite:///{BASE_DIR / 'db.sqlite3'}",
+    )
+except ImproperlyConfigured as exc:
+    if HOSTED_ENV:
+        raise ImproperlyConfigured(HOSTED_DATABASE_CONFIGURATION_ERROR) from exc
+    raise
+
+DATABASES = {"default": default_database}
 DATABASES["default"]["CONN_MAX_AGE"] = env.int("DJANGO_DB_CONN_MAX_AGE", default=60)
 DATABASES["default"]["CONN_HEALTH_CHECKS"] = True
+raw_database_url = os.environ.get("DATABASE_URL", "").strip()
+database_engine = DATABASES["default"].get("ENGINE")
+HOSTED_SQLITE_FALLBACK = (
+    HOSTED_ENV
+    and env.bool("DJANGO_ENABLE_HOSTED_SQLITE_FALLBACK")
+    and bool(raw_database_url)
+    and database_engine == "django.db.backends.sqlite3"
+)
 
-if HOSTED_ENV and DATABASES["default"]["ENGINE"] == "django.db.backends.postgresql":
+if (
+    HOSTED_ENV
+    and database_engine != "django.db.backends.postgresql"
+    and not HOSTED_SQLITE_FALLBACK
+):
+    raise ImproperlyConfigured(HOSTED_DATABASE_CONFIGURATION_ERROR)
+
+if HOSTED_ENV and database_engine == "django.db.backends.postgresql":
     DATABASES["default"].setdefault("OPTIONS", {})
     DATABASES["default"]["OPTIONS"].setdefault(
         "sslmode",
@@ -210,6 +241,10 @@ WHITENOISE_USE_FINDERS = DEBUG
 LOGIN_URL = "login"
 LOGIN_REDIRECT_URL = "home"
 LOGOUT_REDIRECT_URL = "login"
+
+if HOSTED_SQLITE_FALLBACK:
+    SESSION_ENGINE = "django.contrib.sessions.backends.signed_cookies"
+    MESSAGE_STORAGE = "django.contrib.messages.storage.cookie.CookieStorage"
 
 LOG_LEVEL = env("DJANGO_LOG_LEVEL").upper()
 REQUEST_LOG_LEVEL = env("DJANGO_REQUEST_LOG_LEVEL").upper()
