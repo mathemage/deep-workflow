@@ -257,23 +257,37 @@ def test_hosted_sqlite_fallback_requires_explicit_opt_in() -> None:
     assert message_storage == "django.contrib.messages.storage.cookie.CookieStorage"
 
 
-def test_hosted_sqlite_fallback_supports_unset_database_url_with_explicit_opt_in() -> (
-    None
-):
-    hosted_sqlite_fallback, session_engine, message_storage = load_hosted_settings(
-        enable_fallback=True,
-        database_url=None,
+def test_hosted_sqlite_fallback_requires_explicit_database_url() -> None:
+    env = os.environ.copy()
+    env.update(
+        {
+            "DJANGO_DEBUG": "False",
+            "DJANGO_SECRET_KEY": "x" * 64,
+            "VERCEL_ENV": "production",
+            "VERCEL": "1",
+            "DJANGO_ENABLE_HOSTED_SQLITE_FALLBACK": "1",
+        }
+    )
+    env.pop("DATABASE_URL", None)
+    result = subprocess.run(
+        [sys.executable, "-c", "import deep_workflow.settings"],
+        env=env,
+        capture_output=True,
+        text=True,
     )
 
-    assert hosted_sqlite_fallback is True
-    assert session_engine == "django.contrib.sessions.backends.signed_cookies"
-    assert message_storage == "django.contrib.messages.storage.cookie.CookieStorage"
+    assert result.returncode != 0
+    assert "ImproperlyConfigured" in result.stderr
+    assert "Hosted deployments require a valid PostgreSQL DATABASE_URL" in result.stderr
+    assert "Do not use SQLite unless DJANGO_ENABLE_HOSTED_SQLITE_FALLBACK" in (
+        result.stderr
+    )
 
 
 def test_hosted_sqlite_fallback_flag_ignored_for_postgresql() -> None:
     hosted_sqlite_fallback, session_engine, message_storage = load_hosted_settings(
         enable_fallback=True,
-        database_url="postgres://testuser:testpass@localhost:5432/testdb",
+        database_url="postgresql://testuser:testpass@localhost:5432/testdb",
     )
 
     assert hosted_sqlite_fallback is False

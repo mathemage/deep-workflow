@@ -113,10 +113,12 @@ DATABASES = {
 }
 DATABASES["default"]["CONN_MAX_AGE"] = env.int("DJANGO_DB_CONN_MAX_AGE", default=60)
 DATABASES["default"]["CONN_HEALTH_CHECKS"] = True
+RAW_DATABASE_URL = os.environ.get("DATABASE_URL", "").strip()
 DATABASE_ENGINE = DATABASES["default"].get("ENGINE")
 HOSTED_SQLITE_FALLBACK = (
     HOSTED_ENV
     and env.bool("DJANGO_ENABLE_HOSTED_SQLITE_FALLBACK")
+    and bool(RAW_DATABASE_URL)
     and DATABASE_ENGINE == "django.db.backends.sqlite3"
 )
 
