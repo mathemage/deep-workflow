@@ -20,10 +20,11 @@ IMPORT_HOSTED_SETTINGS_COMMAND = (
     "import environ; "
     "environ.Env.read_env = staticmethod(lambda *args, **kwargs: None); "
     "import deep_workflow.settings as settings; "
+    "from django.conf import settings as django_settings; "
     "print(json.dumps(["
     "settings.HOSTED_SQLITE_FALLBACK, "
-    "getattr(settings, 'SESSION_ENGINE', ''), "
-    "getattr(settings, 'MESSAGE_STORAGE', '')"
+    "django_settings.SESSION_ENGINE, "
+    "django_settings.MESSAGE_STORAGE"
     "]))"
 )
 
@@ -144,6 +145,7 @@ def load_hosted_settings(
     env.update(
         {
             "DJANGO_DEBUG": "False",
+            "DJANGO_SETTINGS_MODULE": "deep_workflow.settings",
             "DJANGO_SECRET_KEY": "x" * 64,
             "VERCEL_ENV": "production",
             "VERCEL": "1",
@@ -326,8 +328,8 @@ def test_hosted_sqlite_fallback_flag_ignored_for_postgresql() -> None:
     )
 
     assert hosted_sqlite_fallback is False
-    assert session_engine == ""
-    assert message_storage == ""
+    assert session_engine != "django.contrib.sessions.backends.signed_cookies"
+    assert message_storage != "django.contrib.messages.storage.cookie.CookieStorage"
 
 
 def test_hosted_sqlite_fallback_is_not_applied_to_invalid_database_url() -> None:
