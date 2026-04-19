@@ -65,9 +65,10 @@ if not DEBUG and SECRET_KEY == "unsafe-local-development-key":
     raise ImproperlyConfigured("Set DJANGO_SECRET_KEY before disabling DJANGO_DEBUG.")
 
 HOSTED_DATABASE_CONFIGURATION_ERROR = (
-    "Hosted deployments require a valid PostgreSQL DATABASE_URL. "
-    "Do not use SQLite unless DJANGO_ENABLE_HOSTED_SQLITE_FALLBACK "
-    "is enabled for emergency recovery."
+    "Hosted deployments require one of these database configurations: "
+    "(1) a valid PostgreSQL DATABASE_URL; or "
+    "(2) for emergency recovery only, DJANGO_ENABLE_HOSTED_SQLITE_FALLBACK=1 "
+    "together with an explicit SQLite DATABASE_URL."
 )
 
 INSTALLED_APPS = [
