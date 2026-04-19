@@ -64,6 +64,12 @@ CSRF_TRUSTED_ORIGINS = build_csrf_trusted_origins(
 if not DEBUG and SECRET_KEY == "unsafe-local-development-key":
     raise ImproperlyConfigured("Set DJANGO_SECRET_KEY before disabling DJANGO_DEBUG.")
 
+HOSTED_DATABASE_CONFIGURATION_ERROR = (
+    "Hosted deployments require a valid PostgreSQL DATABASE_URL. "
+    "Do not use SQLite unless DJANGO_ENABLE_HOSTED_SQLITE_FALLBACK "
+    "is enabled for emergency recovery."
+)
+
 INSTALLED_APPS = [
     "django.contrib.admin",
     "django.contrib.auth",
@@ -108,9 +114,17 @@ TEMPLATES = [
 WSGI_APPLICATION = "deep_workflow.wsgi.application"
 
 
-DATABASES = {
-    "default": env.db("DATABASE_URL", default=f"sqlite:///{BASE_DIR / 'db.sqlite3'}")
-}
+try:
+    default_database = env.db(
+        "DATABASE_URL",
+        default=f"sqlite:///{BASE_DIR / 'db.sqlite3'}",
+    )
+except ImproperlyConfigured as exc:
+    if HOSTED_ENV:
+        raise ImproperlyConfigured(HOSTED_DATABASE_CONFIGURATION_ERROR) from exc
+    raise
+
+DATABASES = {"default": default_database}
 DATABASES["default"]["CONN_MAX_AGE"] = env.int("DJANGO_DB_CONN_MAX_AGE", default=60)
 DATABASES["default"]["CONN_HEALTH_CHECKS"] = True
 raw_database_url = os.environ.get("DATABASE_URL", "").strip()
@@ -127,11 +141,7 @@ if (
     and database_engine != "django.db.backends.postgresql"
     and not HOSTED_SQLITE_FALLBACK
 ):
-    raise ImproperlyConfigured(
-        "Hosted deployments require a valid PostgreSQL DATABASE_URL. "
-        "Do not use SQLite unless DJANGO_ENABLE_HOSTED_SQLITE_FALLBACK "
-        "is enabled for emergency recovery."
-    )
+    raise ImproperlyConfigured(HOSTED_DATABASE_CONFIGURATION_ERROR)
 
 if HOSTED_ENV and database_engine == "django.db.backends.postgresql":
     DATABASES["default"].setdefault("OPTIONS", {})
