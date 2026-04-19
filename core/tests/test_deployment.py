@@ -277,9 +277,8 @@ def test_hosted_sqlite_fallback_is_disabled_when_database_url_is_unset() -> None
 
 
 def test_hosted_sqlite_fallback_requires_explicit_opt_in() -> None:
-    hosted_sqlite_fallback, session_engine, message_storage = load_hosted_settings(
-        enable_fallback=True
-    )
+    hosted_settings = load_hosted_settings(enable_fallback=True)
+    hosted_sqlite_fallback, session_engine, message_storage = hosted_settings
 
     assert hosted_sqlite_fallback is True
     assert session_engine == "django.contrib.sessions.backends.signed_cookies"
