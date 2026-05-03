@@ -61,7 +61,7 @@ The MVP is successful when:
 To keep the first version simple and fast to iterate on, the recommended stack is:
 
 - Django
-- PostgreSQL
+- PostgreSQL, with Neon as the recommended hosted provider
 - Django templates with HTMX and Alpine.js
 - Tailwind CSS
 - Vercel for production hosting and pull request preview deployments
@@ -87,7 +87,7 @@ The implementation should land in small, reviewable PRs:
 This repository now includes the foundation plus roadmap slices 1 through 9:
 
 - Django project and `core` app wiring
-- environment-based settings with `DATABASE_URL` support for PostgreSQL
+- environment-based settings with `DATABASE_URL` support for PostgreSQL and Neon
 - login/logout with protected app routes
 - per-user timezone and default session duration settings
 - daily sheet and work session domain models with migrations, admin registration, and tests
@@ -97,7 +97,7 @@ This repository now includes the foundation plus roadmap slices 1 through 9:
 - daily and weekly progress summaries with simple streak and completion indicators
 - mobile-first layout polish for the daily sheet, navigation, and touch targets
 - a manifest, service worker, and installable PWA shell
-- production-hardened hosted settings, Vercel deployment config, readiness endpoints, and request-ID-aware logging
+- production-hardened hosted settings, Vercel deployment config, readiness endpoints, request-ID-aware logging, and separate runtime/admin database URL support
 - PostgreSQL backup and restore documentation for hosted operations
 - Ruff linting/formatting, pytest-based tests, and GitHub Actions CI
 
@@ -143,19 +143,37 @@ The repository now includes the files needed to host the app on Vercel productio
 - `wsgi.py` exposes the Django WSGI app through Vercel's Python runtime
 - `.python-version` pins Vercel to Python 3.12, matching the project's supported local Python 3.12.x runtime
 - `vercel.json` sets the Vercel build command and rewrites
-- `scripts/vercel-build.sh` requires `DJANGO_SECRET_KEY` and `DATABASE_URL` for hosted builds, verifies database readiness, always runs `collectstatic`, and only runs migrations when `VERCEL_RUN_MIGRATIONS=1`
+- `scripts/vercel-build.sh` requires `DJANGO_SECRET_KEY` and the runtime `DATABASE_URL` for hosted builds, verifies runtime database readiness, always runs `collectstatic`, and uses `DATABASE_ADMIN_URL` for migration-time checks and migrations when you provide it
 - hosted settings derive trusted hosts and CSRF origins from `APP_BASE_URL` plus Vercel's runtime URLs, then enable HTTPS redirects, secure cookies, conservative HSTS defaults, WhiteNoise static serving, and request-ID-aware logging
+
+### Recommended Neon setup
+
+This repository's default hosted database path is **Neon PostgreSQL + Vercel**.
+
+The simplest safe setup is:
+
+1. Keep the Neon `main` branch for Production.
+2. Create a Neon `preview` branch from `main` for all Vercel Preview deployments.
+3. In Neon, open **Connect** for each branch and copy both connection strings:
+   - the **pooled** connection string for app runtime traffic
+   - the **direct** connection string for migrations, `pg_dump`, `pg_restore`, and one-off admin work
+4. In Vercel, set:
+   - `DATABASE_URL` to the pooled connection string
+   - `DATABASE_ADMIN_URL` to the direct connection string
+
+This keeps the live app on Neon's pooled serverless-friendly path while leaving schema changes and restore work on the direct admin path. If you later want per-PR database branches, Neon supports that, but this repo currently recommends one dedicated `preview` branch because it is simpler to operate manually.
 
 ### Required environment variables
 
 | Variable | Production | Preview | Notes |
 | --- | --- | --- | --- |
 | `DJANGO_SECRET_KEY` | Required | Required | Use a unique secret per environment. Hosted builds fail fast until this is set. |
-| `DATABASE_URL` | Required | Required | Point previews at an isolated PostgreSQL database or branch database, not production. |
+| `DATABASE_URL` | Required | Required | Use the Neon pooled runtime connection string. Point previews at an isolated PostgreSQL database or branch, not production. |
+| `DATABASE_ADMIN_URL` | Recommended | Recommended | Use the Neon direct connection string for migrations, `pg_dump`, `pg_restore`, and SQLite-to-PostgreSQL transfers. |
 | `APP_BASE_URL` | `https://deep-workflow.vercel.app` | Optional | Sets the canonical production URL and anchors the production host/origin configuration. |
 | `DJANGO_ENABLE_HOSTED_SQLITE_FALLBACK` | Emergency only | Emergency only | Leave unset for normal deploys. Set to `1` only when intentionally activating the temporary hosted SQLite recovery mode. |
 | `DJANGO_SECURE_HSTS_PRELOAD` | Optional | Optional | Leave unset unless you intentionally want preload and already satisfy the preload requirements (`includeSubDomains` plus at least `31536000` seconds). |
-| `VERCEL_RUN_MIGRATIONS` | Set to `1` only for deliberate schema rollouts | Set to `1` only for isolated preview databases | Build-time migrations are always opt-in. |
+| `VERCEL_RUN_MIGRATIONS` | Set to `1` only for deliberate schema rollouts | Set to `1` only for isolated preview databases or the shared preview branch | Build-time migrations are always opt-in. |
 
 #### Generate and add `DJANGO_SECRET_KEY`
 
@@ -178,9 +196,11 @@ Vercel injects `VERCEL_ENV`, `VERCEL_URL`, `VERCEL_BRANCH_URL`, and `VERCEL_PROJ
 
 1. Connect the repository to Vercel and keep `main` as the production branch.
 2. Set `APP_BASE_URL=https://deep-workflow.vercel.app` in the Production environment.
-3. Set `DJANGO_SECRET_KEY` and `DATABASE_URL` in both Production and Preview. Use a separate preview database if you want preview deployments to run migrations.
-4. Let pushes to non-`main` branches create Preview deployments automatically. Leave `VERCEL_RUN_MIGRATIONS` unset for normal deploys; only turn it on for isolated preview databases or a coordinated production schema rollout, then redeploy intentionally.
-5. After each deployment, check `GET /health/ready/` for database readiness and `GET /health/live/` for the lightweight liveness probe.
+3. In Neon, keep `main` for Production and create a separate `preview` branch for Preview deployments.
+4. Set `DJANGO_SECRET_KEY`, `DATABASE_URL`, and `DATABASE_ADMIN_URL` in both Production and Preview. Production should use the Neon `main` branch; Preview should use the Neon `preview` branch.
+5. Let pushes to non-`main` branches create Preview deployments automatically. Leave `VERCEL_RUN_MIGRATIONS` unset for normal deploys; only turn it on for the isolated preview branch or a coordinated production schema rollout, then redeploy intentionally.
+6. After changing any Vercel environment variable, redeploy. Vercel only applies environment variable updates to new deployments.
+7. After each deployment, check `GET /health/ready/` for database readiness and `GET /health/live/` for the lightweight liveness probe.
 
 #### Emergency hosted SQLite recovery
 
@@ -200,6 +220,8 @@ This mode is for emergency recovery only. It moves sessions and flash messages t
 
 Take backups outside Vercel with PostgreSQL client tools and store them in durable storage that is separate from the app deployment.
 
+With Neon, use the **direct** connection string for operational database work. In this repository, that means `DATABASE_ADMIN_URL` when you have it available. Keep `DATABASE_URL` as the pooled runtime URL for the app itself.
+
 Create a compressed backup:
 
 ```bash
@@ -209,7 +231,7 @@ pg_dump \
   --no-owner \
   --no-privileges \
   --file "backups/deep_workflow_$(date +%F_%H%M%S).dump" \
-  "$DATABASE_URL"
+  "$DATABASE_ADMIN_URL"
 ```
 
 Verify a backup by restoring it into a disposable database first:
@@ -239,6 +261,25 @@ pg_restore \
 
 Prefer restoring into a fresh database, smoke-test the app with `/health/ready/`, and only then swap the production `DATABASE_URL`. That keeps rollback simple and avoids destructive restore work against the live database.
 
+### Moving data from the emergency SQLite fallback into Neon
+
+If production is still running from the temporary hosted SQLite recovery path, use the included transfer script from a machine that has access to the SQLite file or SQLite `DATABASE_URL`.
+
+```bash
+SOURCE_DATABASE_URL=sqlite:////absolute/path/to/recovery.sqlite3 \
+TARGET_DATABASE_URL="$DATABASE_ADMIN_URL" \
+./scripts/transfer-django-data.sh
+```
+
+The script:
+
+- verifies source and target connectivity
+- exports Django model data from the source database
+- applies migrations to the PostgreSQL target
+- loads the exported data into the PostgreSQL target
+
+It intentionally excludes generated framework tables such as `contenttypes`, `auth.permission`, session rows, and admin log entries. Use a fresh Neon target branch or database when possible, then update Vercel to point Production and Preview back at Neon and redeploy.
+
 ## Quality checks
 
 Run the foundational checks before opening a change:
@@ -256,6 +297,7 @@ For a production-leaning settings smoke test, also run:
 ```bash
 . .venv/bin/activate
 APP_BASE_URL=https://deep-workflow.vercel.app \
+DATABASE_URL=postgresql://postgres:postgres@127.0.0.1:5432/deep_workflow \
 DJANGO_DEBUG=False \
 DJANGO_SECRET_KEY=local-deploy-check-only-1234567890-abcdefghijklmnopqrstuvwxyz \
 python manage.py check --deploy

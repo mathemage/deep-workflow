@@ -3,6 +3,7 @@ set -euo pipefail
 
 vercel_environment="${VERCEL_ENV:-local}"
 vercel_runtime="${VERCEL:-}"
+admin_database_url="${DATABASE_ADMIN_URL:-}"
 
 if [[ "$vercel_environment" == "preview" || "$vercel_environment" == "production" || "$vercel_environment" == "development" || "$vercel_runtime" == "1" || "$vercel_runtime" == "true" ]]; then
   if [[ -z "${DJANGO_SECRET_KEY:-}" ]]; then
@@ -22,7 +23,13 @@ fi
 python manage.py collectstatic --noinput
 
 if [[ "${VERCEL_RUN_MIGRATIONS:-0}" == "1" ]]; then
-  python manage.py migrate --noinput
+  if [[ -n "$admin_database_url" ]]; then
+    echo "Using DATABASE_ADMIN_URL for migration-time database checks and migrations."
+    DATABASE_URL="$admin_database_url" python manage.py check_database
+    DATABASE_URL="$admin_database_url" python manage.py migrate --noinput
+  else
+    python manage.py migrate --noinput
+  fi
 else
   echo "Skipping migrations for ${VERCEL_ENV:-local} deployment. Set VERCEL_RUN_MIGRATIONS=1 to enable them explicitly."
 fi
