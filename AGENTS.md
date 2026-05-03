@@ -10,7 +10,7 @@
 
 ## Technical Details
 
-- Follow the roadmap in `plan.md`: Django, PostgreSQL, Django templates with HTMX and Alpine.js, Tailwind CSS, and Vercel for hosting.
+- Follow the roadmap in `plan.md`: Django, PostgreSQL with Neon for hosted databases, Django templates with HTMX and Alpine.js, Tailwind CSS, and Vercel for hosting.
 - Keep the timer server-backed via timestamps so refreshes and device switching do not lose session state.
 - Prefer server-rendered flows and simple abstractions; only add client-side behavior where it materially improves the experience.
 - Cover core workflow logic and persistence with automated tests, and use integration or end-to-end tests for critical user flows.

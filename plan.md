@@ -15,7 +15,7 @@ Build a hosted, modern, mobile-friendly web app that replaces a spreadsheet for 
 Recommended stack for v1:
 
 - Django for the core web framework
-- PostgreSQL for hosted persistence
+- PostgreSQL with Neon for hosted persistence
 - Django templates + HTMX + Alpine.js for a modern UX without a heavy SPA
 - Tailwind CSS for responsive, polished UI
 - Vercel for production hosting and pull request preview deployments
@@ -27,7 +27,7 @@ Why this stack:
 - Django gives auth, ORM, migrations, admin, forms, and deployment maturity out of the box
 - server-rendered pages keep the product simple while still feeling fast
 - HTMX/Alpine add interactivity where needed without creating a separate frontend app
-- PostgreSQL makes hosted sync straightforward
+- Neon-backed PostgreSQL makes hosted sync straightforward
 - Vercel gives a clear path for production releases and PR previews
 
 Assumptions for MVP:
